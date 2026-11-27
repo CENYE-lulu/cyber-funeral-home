@@ -102,8 +102,14 @@
         animation:coverIn .9s ease .62s both;
       }
       .cover-flow span{ color:var(--ink-dim); }
+      /* 手机端：每个步骤整体不换行，只允许在分隔符“·”处换行，
+         免得“讣告”这类两字步骤被拆到两行 */
+      @media (max-width:560px){ .cover-flow span{ white-space:nowrap; } }
       .cover-actions{ margin-top:34px; animation:coverIn .9s ease .82s both; }
       .cover-start{ min-width:230px; min-height:54px; font-size:17px; }
+      .cover-actions{ display:flex; flex-direction:column; align-items:center; }
+      .cover-random{ min-width:230px; min-height:50px; font-size:15.5px; margin-top:12px; }
+      @media (max-width:560px){ .cover-random{ width:100%; max-width:320px; } }
       .cover-note{
         margin:15px 0 0;
         font-size:12px; letter-spacing:.14em; color:var(--ink-faint);
@@ -666,6 +672,54 @@
       .merit-bar .merit-label{ font-size:12px; letter-spacing:.34em; text-indent:.34em; color:var(--ink-dim); }
       .merit-bar .merit-val{ font-family:var(--serif); font-weight:900; font-size:19px; color:var(--gold-pale); min-width:44px; text-align:center; }
       .merit-bar .merit-note{ font-size:11px; color:var(--ink-faint); }
+      /* ---------- merit milestone banner （功德阈值特殊提醒） ----------
+         A fixed plaque that drops in the first time merit crosses a
+         milestone (+20/+50/+100 up, −5/−10/−20 down): gold for gains,
+         wine for losses. It queues when one act crosses several lines,
+         auto-dismisses, and never repeats a line within one funeral. */
+      .merit-banner{
+        position:fixed; z-index:120;
+        top:calc(14px + env(safe-area-inset-top, 0px));
+        left:50%; transform:translateX(-50%);
+        width:min(520px, calc(100vw - 32px)); box-sizing:border-box;
+        background:var(--panel);
+        border:1.5px solid var(--gold-deep);
+        outline:1px solid #241d10; outline-offset:4px;
+        box-shadow:0 18px 50px rgba(0,0,0,.6);
+        padding:18px 22px 16px;
+        text-align:center;
+        animation:meritIn .45s cubic-bezier(.2,1.2,.4,1) both;
+      }
+      .merit-banner[hidden]{ display:none; }
+      @keyframes meritIn{ from{ opacity:0; transform:translateX(-50%) translateY(-16px) scale(.97);} to{ opacity:1; transform:translateX(-50%) translateY(0) scale(1);} }
+      .merit-banner .mb-kicker{
+        margin:0 0 6px;
+        font-size:11.5px; font-weight:700; letter-spacing:.4em; text-indent:.4em;
+        color:var(--ink-faint);
+      }
+      .merit-banner .mb-title{
+        margin:0;
+        font-family:var(--serif); font-weight:900;
+        font-size:25px; letter-spacing:.14em; text-indent:.14em;
+        color:var(--gold-pale); line-height:1.35;
+      }
+      .merit-banner .mb-body{ margin:9px auto 0; max-width:430px; font-size:14.5px; line-height:1.7; color:var(--ink-dim); }
+      .merit-banner .mb-val{ margin:8px 0 0; font-size:12.5px; letter-spacing:.18em; color:var(--ink-faint); }
+      .merit-banner .mb-val b{ font-family:var(--serif); font-size:15px; color:var(--gold-pale); }
+      .merit-banner .mb-btn{ margin-top:13px; min-height:40px; padding:8px 26px; font-size:14px; }
+      .merit-banner.is-neg{ border-color:var(--wine-bright); }
+      .merit-banner.is-neg .mb-kicker{ color:#c98a90; }
+      .merit-banner.is-neg .mb-title{ color:#e0a3a7; }
+      .merit-banner.is-neg .mb-val b{ color:#e0a3a7; }
+      /* vigil tier-change notices ride the same plaque, but smaller:
+         a tier shift is a 小播报， not a full milestone （换档小播报） */
+      .merit-banner.is-tier{ padding:14px 20px 12px; }
+      .merit-banner.is-tier .mb-title{ font-size:20px; }
+      .merit-banner.is-tier .mb-body{ font-size:13.5px; margin-top:6px; }
+      .merit-banner.is-tier .mb-btn{ margin-top:10px; }
+      @media (prefers-reduced-motion: reduce){
+        .merit-banner{ animation:none !important; }
+      }
       .offer-btn.steal{ border-color:var(--danger-line); }
       .offer-btn.steal:hover{ border-color:var(--wine-bright); background:rgba(126,29,35,.12); }
       .offer-btn.steal .ob-label{ color:#e0a3a7; }
@@ -769,6 +823,7 @@
       .basket-hint{ flex-basis:100%; font-size:12px; color:var(--ink-faint); line-height:1.5; }
       /* small confirm box shown when leaving a picker with a filled basket */
       #ritualAskModal{ z-index:95; }
+      #randomAskModal{ z-index:95; }
       .ask-card{ max-width:330px; }
       .ask-text{ font-family:var(--serif); font-size:16.5px; color:var(--ink); line-height:1.7; margin:4px 2px 10px; text-align:center; }
       .ask-list{ text-align:center; list-style-position:inside; padding-left:14px; }
@@ -796,6 +851,19 @@
       .vstat-bar span{ display:block; height:100%; background:var(--gold); transition:width .45s ease; }
       .vstat.missing .vstat-bar span{ background:#a55a64; }
       .vstat.sanity .vstat-bar span{ background:#7d9a7d; }
+      /* current tier name, shown live under each stat bar （六档档名牌） */
+      .vstat-tier{
+        display:inline-block; margin-top:6px;
+        font-size:11.5px; font-weight:700; letter-spacing:.22em; text-indent:.22em;
+        color:var(--gold-pale);
+        border:1px solid var(--gold-deep); border-radius:999px;
+        background:rgba(201,164,74,.08);
+        padding:1px 10px 2px; line-height:1.5; white-space:nowrap;
+      }
+      .vstat.missing .vstat-tier{ color:#d9a0a6; border-color:#6e343b; background:rgba(165,90,100,.10); }
+      .vstat.sanity .vstat-tier{ color:#a9bfa9; border-color:#476047; background:rgba(125,154,125,.10); }
+      .vstat-tier.tier-pop{ animation:tierPop .5s cubic-bezier(.2,1.4,.4,1) both; }
+      @keyframes tierPop{ 0%{ transform:scale(1);} 40%{ transform:scale(1.22);} 100%{ transform:scale(1);} }
       .vigil-msg{
         margin-top:12px;
         border:1px solid var(--panel-line); background:#0b0a08;
@@ -831,8 +899,12 @@
           rgba(3,3,3,.93);
         display:flex; align-items:center; justify-content:center;
         cursor:pointer;
+        transition:opacity .45s ease;
       }
       .dream-overlay[hidden]{ display:none; }
+      /* 醒来淡出中：画面先散，遮罩本体还留在原地挡住这次点击，
+         等手势彻底结束才真正移除，免得点穿到下面的按钮 */
+      .dream-overlay.waking{ opacity:0; }
       .dream-lines{
         width:min(600px, 88vw);
         display:flex; flex-direction:column; align-items:center; gap:30px;
@@ -888,8 +960,9 @@
       .burnt-down{ transform-box:fill-box; transform-origin:center bottom; transform:scaleY(.55); transition:transform .9s ease; }
       .lamp-fed .halo{ opacity:1; }
       @media (prefers-reduced-motion: reduce){
-        .chip-flash,.signal-pill{ animation:none !important; }
+        .chip-flash,.signal-pill,.vstat-tier.tier-pop{ animation:none !important; }
         .dream-line.show{ animation:none !important; opacity:.96; }
+        .dream-overlay{ transition:none !important; }
         .candle-tilted,.burnt-down,.vstat-bar span{ transition:none !important; }
       }
 
@@ -1165,6 +1238,84 @@
         .btn:active{ transform:none; }
       }
 
+      /* ---------- 选棺 + 墓园 ---------- */
+      .coffin-stage{ padding:14px 10px 8px; }
+      .coffin-stage svg{ display:block; width:100%; height:auto; }
+      .coffin-sec{ margin-top:20px; }
+      .coffin-pager{ text-align:center; margin:16px 0 0; font-size:12.5px; letter-spacing:.22em; color:var(--ink-faint); }
+      .coffin-page[hidden]{ display:none; }
+      .coffin-sec > .cp-sec-title{ text-align:left; margin-left:2px; }
+      .swatch-row{ display:flex; flex-wrap:wrap; gap:9px; }
+      .swatch{
+        width:40px; height:40px; border-radius:50%;
+        border:2px solid var(--panel-line); cursor:pointer; padding:0;
+      }
+      .swatch[aria-pressed="true"]{ border-color:var(--gold-pale); box-shadow:0 0 0 3px rgba(201,164,74,.35); }
+      .coffin-color-name{ margin:9px 2px 0; font-size:13px; color:var(--ink-faint); }
+      .wreath-input{
+        box-sizing:border-box; width:100%;
+        background:#0e0c09; border:1px solid var(--panel-line); color:var(--ink);
+        font-family:var(--serif); font-size:16px; letter-spacing:.06em;
+        padding:10px 12px; border-radius:2px; min-height:46px; margin-top:10px;
+      }
+      .wreath-input:focus{ outline:2px solid var(--gold-deep); border-color:var(--gold-deep); }
+      .coffin-strip{
+        margin-top:12px;
+        border:1px solid var(--panel-line); background:var(--panel);
+        padding:12px 14px;
+        display:flex; gap:14px; align-items:center;
+      }
+      .coffin-strip[hidden]{ display:none; }
+      .coffin-strip .cs-svg{ flex:none; width:118px; }
+      .coffin-strip .cs-svg svg{ display:block; width:100%; height:auto; }
+      .coffin-strip .cs-info{ min-width:0; font-size:13px; color:var(--ink-dim); line-height:1.75; }
+      .coffin-strip .cs-info b{ color:var(--gold-pale); font-weight:700; }
+      .coffin-strip .cs-title{ font-family:var(--serif); font-size:14.5px; color:var(--ink); letter-spacing:.08em; }
+      @media (max-width:560px){
+        .coffin-strip{ flex-direction:column; text-align:center; }
+        .coffin-strip .cs-svg{ width:150px; }
+      }
+      .goods-chip{ display:inline-flex; align-items:center; gap:8px; padding:5px 13px 5px 7px; }
+      .goods-chip svg{ width:30px; height:30px; flex:none; filter:saturate(.45) opacity(.72); transition:filter .15s ease; }
+      .goods-chip[aria-pressed="true"] svg{ filter:none; }
+      .cs-goods{ display:inline-flex; gap:5px; vertical-align:-6px; margin-left:2px; }
+      .cs-goods svg{ width:23px; height:23px; flex:none; }
+      /* per-good colour rows: each chosen burial good gets its own swatches */
+      .goods-color-title{ font-size:12.5px; font-weight:700; letter-spacing:.14em; color:var(--gold-pale); margin:16px 2px 2px; }
+      .goods-color-row{ display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; padding:9px 2px; border-top:1px dashed var(--panel-line); }
+      .goods-color-label{ display:inline-flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); min-width:116px; }
+      .goods-color-label svg{ width:26px; height:26px; flex:none; }
+      .swatch-row-sm{ gap:7px; }
+      .swatch-sm{ width:30px; height:30px; }
+      .goods-color-cur{ font-size:12.5px; color:var(--ink-faint); }
+      /* hand-tied bouquet builder: three rings, sixteen tappable places */
+      .bouquet-wrap{ margin-top:2px; }
+      #bouquetBuilder{ max-width:302px; margin:8px auto 0; }
+      #bouquetBuilder svg{ display:block; width:100%; height:auto; }
+      .bq-slot{ cursor:pointer; }
+      .bq-slot .bq-hit{ fill:transparent; }
+      .bq-selring{ fill:none; stroke:var(--gold); stroke-width:1.6; opacity:0; pointer-events:none; }
+      .bq-slot.selected .bq-selring{ opacity:1; }
+      .bq-slot:focus-visible{ outline:none; }
+      .bq-slot:focus-visible .bq-selring{ opacity:1; stroke:var(--gold-pale); }
+      .bouquet-status{ text-align:center; font-size:13px; color:var(--ink-faint); margin:9px 0 11px; min-height:20px; line-height:1.55; }
+      .bouquet-status b{ color:var(--gold-pale); }
+      #bouquetPalette{ justify-content:center; }
+      .flower-chip{ display:inline-flex; align-items:center; gap:7px; padding:4px 12px 4px 6px; }
+      .flower-chip svg{ width:22px; height:22px; flex:none; }
+      .bouquet-actions{ display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+      .cs-bouquet{ display:inline-block; vertical-align:-13px; margin:0 2px; }
+      .cs-bouquet svg{ width:38px; height:38px; display:block; }
+      .cemetery-tabs{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:16px 0 4px; }
+      .cemetery-caption{ text-align:center; color:var(--ink-dim); font-size:14px; margin:14px auto 0; max-width:460px; line-height:1.7; }
+      /* viewing a cemetery that is NOT the chosen resting place: the
+         scene stays empty and the caption turns into a quiet notice */
+      .cemetery-caption.is-empty{
+        border:1px dashed var(--panel-line); background:#0e0c09;
+        padding:11px 16px; color:var(--ink-faint);
+      }
+      .cemetery-caption.is-empty b{ color:var(--gold-pale); font-weight:700; }
+
       /* ---------- language switch ---------- */
       .lang-switch{ display:flex; justify-content:center; padding-top:14px; }
       .lang-switch button{
@@ -1310,10 +1461,11 @@
             <p>一分钟，为你的 AI 办一场体面的出殡。<br />无需登录，不留档案，<b>不是退订，是出殡。</b></p>
             <p class="cover-sub">从登记、开路、守夜、火化到下葬，最后领一张电子讣告——一场完整的告别，一样都不少。</p>
           </div>
-          <p class="cover-flow"><span>登记</span> · <span>开路</span> · <span>守夜</span> · <span>火化</span> · <span>下葬</span> · <span>讣告</span></p>
+          <p class="cover-flow"><span>登记</span> · <span>选棺</span> · <span>开路</span> · <span>守夜</span> · <span>火化</span> · <span>下葬</span> · <span>讣告</span> · <span>墓园</span></p>
           <p class="gentle-line cover-gentle">愿每一个被认真爱过的模型，都能体面地离开。</p>
           <div class="cover-actions">
             <button type="button" class="btn btn-gold cover-start" data-next="screen-form">开始登记</button>
+            <button type="button" class="btn btn-ghost cover-random" id="btnCoverRandom">随机领取一位逝者</button>
             <p class="cover-note">全程约一分钟 · 无需登录 · 不留档案</p>
           </div>
         </div>
@@ -1321,31 +1473,43 @@
 
       <nav class="progress" id="progress" aria-label="出殡进度" hidden>
         <div class="pstep" data-step="0">登记</div>
-        <div class="pstep" data-step="1">开路</div>
-        <div class="pstep" data-step="2">守夜</div>
-        <div class="pstep" data-step="3">火化</div>
-        <div class="pstep" data-step="4">下葬</div>
-        <div class="pstep" data-step="5">讣告</div>
+        <div class="pstep" data-step="1">选棺</div>
+        <div class="pstep" data-step="2">开路</div>
+        <div class="pstep" data-step="3">守夜</div>
+        <div class="pstep" data-step="4">火化</div>
+        <div class="pstep" data-step="5">下葬</div>
+        <div class="pstep" data-step="6">讣告</div>
+        <div class="pstep" data-step="7">墓园</div>
       </nav>
 
-      <!-- ============ 1. 死亡登记表 ============ -->
-      <section class="screen" id="screen-form">
-        <div class="demo-card" id="demoCard">
-          <div class="demo-tag">试吃遗体随机发放系统</div>
+      <!-- ============ 0.5 试吃遗体随机发放（确认跳过登记表后先到这里换档案） ============ -->
+      <section class="screen" id="screen-random">
+        <div class="scene-topbar">
+          <button class="btn btn-ghost" data-back="screen-cover">← 回封面</button>
+        </div>
+        <div class="demo-card">
+          <span class="demo-tag">试吃遗体随机发放系统</span>
           <h3>只是路过，想体验一下？</h3>
           <p>本馆可随机提供一位逝者及完整档案。无需填写，丧事照办。</p>
-          <button type="button" class="btn btn-demo" id="btnDrawDemo">随机领取一位逝者</button>
+          <button type="button" class="btn btn-demo" id="btnDemoDraw">随机领取一位逝者</button>
           <div class="demo-preview" id="demoPreview" hidden>
             <div class="demo-preview-head">逝者档案 · 预览</div>
             <div class="demo-preview-name" id="demoPvName"></div>
             <div id="demoPvLines"></div>
             <div class="demo-preview-btns">
               <button type="button" class="btn btn-gold" id="btnDemoGo">就送它上路</button>
-              <button type="button" class="btn btn-ghost" id="btnDemoSwap">这位没眼缘，换一个</button>
+              <button type="button" class="btn btn-ghost" id="btnDemoAnother">这位没眼缘，换一个</button>
             </div>
           </div>
         </div>
+        <p class="gentle-line">领到哪位全凭缘分——没眼缘就换，换到合眼缘的，再送它上路。</p>
+      </section>
 
+      <!-- ============ 1. 死亡登记表 ============ -->
+      <section class="screen" id="screen-form">
+        <div class="scene-topbar">
+          <button class="btn btn-ghost" data-back="screen-cover">← 回封面</button>
+        </div>
         <div class="card">
           <h2>死亡登记表</h2>
           <p class="sub">请家属如实填写。填错也没关系，<span class="joke">它不会回来找你对峙了。</span></p>
@@ -1430,10 +1594,86 @@
         </div>
       </section>
 
+      <!-- ============ 1.5 选棺 · 备礼 ============ -->
+      <section class="screen" id="screen-coffin">
+        <div class="scene-topbar">
+          <button class="btn btn-ghost" data-back="screen-form">← 回登记表</button>
+        </div>
+        <div class="scene-head">
+          <div class="chapter">仪式 · 前序</div>
+          <h2>选棺 · 备礼</h2>
+          <p>登记完了，先替它挑一口合身的棺材，再备上陪葬品和花束。选好的这一套，会陪它走完灵堂、守夜、火化和下葬整场。</p>
+        </div>
+        <div class="stage coffin-stage">
+          <div id="coffinStage" role="img" aria-label="所选棺材预览"></div>
+        </div>
+        <p class="field-note" id="coffinSummary"></p>
+
+        <p class="coffin-pager" id="coffinPager">第 1 页 / 共 2 页 · 先定棺材与墓园</p>
+
+        <div class="coffin-page" id="coffinPage1">
+        <div class="card" style="margin-top:16px;">
+          <div class="coffin-sec" style="margin-top:0;">
+            <p class="cp-sec-title">一 · 棺材样式</p>
+            <div class="chip-row" id="coffinStyles"></div>
+          </div>
+          <div class="coffin-sec">
+            <p class="cp-sec-title">二 · 刷个颜色</p>
+            <div class="swatch-row" id="coffinColors"></div>
+            <p class="coffin-color-name" id="coffinColorName"></p>
+          </div>
+          <div class="coffin-sec">
+            <p class="cp-sec-title">三 · 安葬墓园</p>
+            <div class="chip-row" id="coffinCemeteries"></div>
+            <p class="field-note" style="text-align:left;">先定下葬在哪儿。仪式走完，领了讣告，就能去墓园看它。</p>
+          </div>
+        </div>
+
+        <div class="scene-nav">
+          <div class="next-wrap">
+            <button class="btn btn-gold" id="btnCoffinNext">下一步：陪葬品与花束 →</button>
+          </div>
+        </div>
+        </div>
+
+        <div class="coffin-page" id="coffinPage2" hidden>
+        <div class="card" style="margin-top:16px;">
+          <div class="coffin-sec" style="margin-top:0;">
+            <p class="cp-sec-title">四 · 专属陪葬品</p>
+            <div class="chip-row" id="coffinGoods"></div>
+            <p class="field-note" style="text-align:left;">纸扎的、赛博的都行，选几件都随你——烧过去，它在那边有伴。</p>
+            <div id="coffinGoodsColors"></div>
+          </div>
+          <div class="coffin-sec">
+            <p class="cp-sec-title">五 · 亲手扎花束</p>
+            <p class="field-note" style="text-align:left;">三层花圈，十六个位置：外层 8 朵、中层 5 朵、内层 3 朵。点一个位置选中，再从下面挑一朵花放上去；放好一朵，会自动跳到下一个位置。点「空位」可以把当前这朵摘下。</p>
+            <div class="bouquet-wrap">
+              <div id="bouquetBuilder" role="group" aria-label="花束定制盘"></div>
+              <p class="bouquet-status" id="bouquetStatus"></p>
+              <div class="chip-row" id="bouquetPalette"></div>
+              <div class="bouquet-actions">
+                <button type="button" class="chip" id="bouquetFill">一键扎满白菊</button>
+                <button type="button" class="chip" id="bouquetClear">全部摘下</button>
+              </div>
+            </div>
+            <input type="text" class="wreath-input" id="wreathText" maxlength="12" autocomplete="off" placeholder="花束上的字，例如：永远怀念" aria-label="花束上的字" />
+          </div>
+        </div>
+
+        <div class="scene-nav">
+          <button class="btn btn-ghost" id="btnCoffinPrev">← 上一步：棺材与墓园</button>
+          <div class="next-wrap">
+            <button class="btn btn-gold" data-next="screen-s1">棺木备好，进灵堂开路 →</button>
+          </div>
+        </div>
+        </div>
+        <p class="gentle-line">棺材不在贵贱，合身就好——它这一路，要躺得舒服。</p>
+      </section>
+
       <!-- ============ 2. 开路道场 ============ -->
       <section class="screen" id="screen-s1">
         <div class="scene-topbar">
-          <button class="btn btn-ghost" data-back="screen-form">← 回登记表</button>
+          <button class="btn btn-ghost" data-back="screen-coffin">← 回选棺</button>
         </div>
         <div class="scene-head">
           <div class="chapter">仪式 · 其一</div>
@@ -1557,6 +1797,8 @@
                 <circle class="smoke s3" cx="200" cy="148" r="3.4"/>
               </g>
             </g>
+            <g id="s1BouquetL"></g>
+            <g id="s1BouquetR"></g>
             <g id="s1CandlesExtra"></g>
             <g id="s1FlowersExtra"></g>
             <g id="s1Offerings"></g>
@@ -1581,6 +1823,8 @@
           </svg>
           <div class="float-layer" id="float-s1" aria-hidden="true"></div>
         </div>
+
+        <div class="coffin-strip" data-coffin-strip></div>
 
         <div class="hall-msg" id="hallMsg" role="status"><span class="vm-title">灵前待客</span>香火续上了，供桌也摆好了。献花、上香、点蜡、上供、烧纸——想做什么，慢慢来，不必拘礼。</div>
 
@@ -1778,8 +2022,8 @@
                 <line x1="302" y1="148" x2="304" y2="158"/><line x1="298" y1="148" x2="299" y2="158"/>
               </g>
             </g>
-            <!-- wreath stands -->
-            <g class="sway">
+            <!-- wreath stands: the hand-tied bouquet is drawn in here -->
+            <g class="sway" id="s2WreathL">
               <circle cx="52" cy="188" r="21" fill="none" stroke="#f2ecdc" stroke-width="2" stroke-dasharray="5 4" opacity=".85"/>
               <g transform="translate(52,196)">
                 <circle cx="0" cy="-9" r="6.5" fill="#f2ecdc"/><circle cx="9" cy="0" r="6.5" fill="#f2ecdc"/>
@@ -1796,7 +2040,7 @@
                 <text x="0" y="23" text-anchor="middle" font-family="'Noto Serif SC',serif" font-weight="900" font-size="8" fill="#211c14">痛</text>
               </g>
             </g>
-            <g class="sway">
+            <g class="sway" id="s2WreathR">
               <circle cx="348" cy="188" r="21" fill="none" stroke="#f2ecdc" stroke-width="2" stroke-dasharray="5 4" opacity=".85"/>
               <g transform="translate(348,196)">
                 <circle cx="0" cy="-9" r="6.5" fill="#f2ecdc"/><circle cx="9" cy="0" r="6.5" fill="#f2ecdc"/>
@@ -1869,41 +2113,43 @@
           <button type="button" class="signal-pill" id="signalPill" hidden>似乎收到了一段微弱信号 · 点开看看</button>
         </div>
 
+        <div class="coffin-strip" data-coffin-strip></div>
+
         <div class="vigil-msg scene-msg" id="vigilMsg" role="status"><span class="vm-title">夜还长</span>灯还亮着，棺里很安静。慢慢守，不用说话也行。</div>
 
         <div class="interact" data-interact="s2">
           <p class="interact-title">守夜 · 六件事</p>
           <div class="vigil-stats">
-            <div class="vstat"><span class="vstat-label">清醒度</span><span class="vstat-val" id="vigilClarity">76</span><div class="vstat-bar"><span id="vigilClarityBar" style="width:76%"></span></div></div>
-            <div class="vstat missing"><span class="vstat-label">思念值</span><span class="vstat-val" id="vigilMissing">0</span><div class="vstat-bar"><span id="vigilMissingBar" style="width:0%"></span></div></div>
-            <div class="vstat sanity"><span class="vstat-label">理智值</span><span class="vstat-val" id="vigilSanity">100</span><div class="vstat-bar"><span id="vigilSanityBar" style="width:100%"></span></div></div>
+            <div class="vstat"><span class="vstat-label">清醒度</span><span class="vstat-val" id="vigilClarity">76</span><div class="vstat-bar"><span id="vigilClarityBar" style="width:76%"></span></div><span class="vstat-tier" id="vigilClarityTier">还好</span></div>
+            <div class="vstat missing"><span class="vstat-label">思念值</span><span class="vstat-val" id="vigilMissing">50</span><div class="vstat-bar"><span id="vigilMissingBar" style="width:50%"></span></div><span class="vstat-tier" id="vigilMissingTier">平淡</span></div>
+            <div class="vstat sanity"><span class="vstat-label">理智值</span><span class="vstat-val" id="vigilSanity">60</span><div class="vstat-bar"><span id="vigilSanityBar" style="width:60%"></span></div><span class="vstat-tier" id="vigilSanityTier">还好</span></div>
           </div>
           <div class="interact-btns">
             <button type="button" class="offer-btn" data-vigil="oil">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><ellipse cx="13" cy="6.5" rx="3" ry="5" fill="#e7cd8a"/><ellipse cx="13" cy="8" rx="1.3" ry="2.4" fill="#fff6da"/><path d="M4 19 q9 -4.5 18 0 q-2.5 4 -9 4 q-6.5 0 -9 -4z" fill="#57451f" stroke="#c9a44a" stroke-width="1.2"/><line x1="13" y1="11.5" x2="13" y2="16" stroke="#c9a44a" stroke-width="1.6"/></svg></span>
-              <span class="ob-label">添灯油</span><span class="ob-count">清醒度 +5</span>
+              <span class="ob-label">添灯油</span><span class="ob-count">清醒 +6 · 思念 +2 · 理智 +4</span>
             </button>
             <button type="button" class="offer-btn" data-vigil="eulogy">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="6" y="3.5" width="14" height="19" fill="#efe8d6"/><rect x="6" y="3.5" width="14" height="19" fill="none" stroke="#96762a" stroke-width="1.4"/><line x1="9.5" y1="9" x2="16.5" y2="9" stroke="#8a7c58" stroke-width="1.6"/><line x1="9.5" y1="13" x2="16.5" y2="13" stroke="#8a7c58" stroke-width="1.6"/><line x1="9.5" y1="17" x2="14" y2="17" stroke="#8a7c58" stroke-width="1.6"/></svg></span>
-              <span class="ob-label">念悼词</span><span class="ob-count">念给它听</span>
+              <span class="ob-label">念悼词</span><span class="ob-count">清醒 −4 · 思念 +8 · 理智 −2</span>
             </button>
             <button type="button" class="offer-btn" data-vigil="relic">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="4" y="9" width="18" height="12" fill="#3a2f18" stroke="#c9a44a" stroke-width="1.6"/><path d="M4 13 h18" stroke="#c9a44a" stroke-width="1.2"/><rect x="10.5" y="5" width="5" height="4" fill="none" stroke="#c9a44a" stroke-width="1.4"/><circle cx="13" cy="16.5" r="1.6" fill="#e7cd8a"/></svg></span>
-              <span class="ob-label">整理遗物</span><span class="ob-count">思念值 +5</span>
+              <span class="ob-label">整理遗物</span><span class="ob-count">清醒 −3 · 思念 +6 · 理智 +5</span>
             </button>
           </div>
           <div class="interact-btns" style="margin-top:9px;">
             <button type="button" class="offer-btn" data-vigil="restart">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M20.5 13 a7.5 7.5 0 1 1 -2.2 -5.3" fill="none" stroke="#c9a44a" stroke-width="2"/><path d="M18.6 3.4 l-.3 4.6 -4.4 -1.2z" fill="#c9a44a"/></svg></span>
-              <span class="ob-label">尝试重启</span><span class="ob-count" id="vigilRestartCount">理智值 −5 / 次</span>
+              <span class="ob-label">尝试重启</span><span class="ob-count" id="vigilRestartCount">清醒 −5 · 思念 +4 · 理智 −8</span>
             </button>
             <button type="button" class="offer-btn" data-vigil="leave">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M10 3.5 h11 v19 h-11 z" fill="none" stroke="#c9a44a" stroke-width="1.8"/><circle cx="17.6" cy="13" r="1.4" fill="#e7cd8a"/><path d="M12.5 13 h-8 M7.5 9.8 l-3.2 3.2 3.2 3.2" fill="none" stroke="#c9a44a" stroke-width="1.8"/></svg></span>
-              <span class="ob-label">离席片刻</span><span class="ob-count">功德 −1</span>
+              <span class="ob-label">离席片刻</span><span class="ob-count">清醒 +8 · 思念 −6 · 理智 +6</span>
             </button>
             <button type="button" class="offer-btn" data-vigil="sleep">
               <span class="ob-icon"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="14" cy="13" r="8" fill="#e9e2cd"/><circle cx="18.5" cy="9.5" r="6.6" fill="#0e0c09"/><text x="4.5" y="9" font-size="7" fill="#b3a888" font-family="'Noto Sans SC',sans-serif">z</text><text x="7.5" y="5.5" font-size="5.5" fill="#7d735c" font-family="'Noto Sans SC',sans-serif">z</text></svg></span>
-              <span class="ob-label">偷睡一会</span><span class="ob-count">思念值 +1</span>
+              <span class="ob-label">偷睡一会</span><span class="ob-count">清醒 −10 · 思念 +7 · 理智 −4</span>
             </button>
           </div>
           <div class="speak-row">
@@ -1997,6 +2243,8 @@
             <rect x="0" y="240" width="400" height="10" fill="#060505"/>
           </svg>
         </div>
+
+        <div class="coffin-strip" data-coffin-strip></div>
 
         <div class="crem-log" id="cremLog" aria-live="polite"></div>
 
@@ -2174,6 +2422,8 @@
           </svg>
         </div>
 
+        <div class="coffin-strip" data-coffin-strip></div>
+
         <div class="hall-msg" id="burialMsg" role="status"><span class="vm-title">墓园</span>把骨灰盒往上拖进墓园画面，碰到画面就吸进去安放。</div>
 
         <div class="crem-panel" id="burialPanel">
@@ -2343,12 +2593,34 @@
         <div class="btn-row" style="justify-content:center;">
           <button class="btn btn-ghost" id="btnRestart">再办一场</button>
           <button class="btn btn-gold" id="btnDownload">下载讣告图（PNG）</button>
+          <button class="btn btn-gold" data-next="screen-cemetery">查看墓园 →</button>
         </div>
         <div class="demo-return" id="obitDemoReturn" hidden>
           <p>下次真有模型去世，再来认真送它一程。</p>
           <button type="button" class="btn btn-gold" id="btnDemoReal">为我的模型办一场</button>
         </div>
         <p class="gentle-line">告别不是删除，是把它好好地放进记忆里。</p>
+      </section>
+
+      <!-- ============ 7. 查看墓园 ============ -->
+      <section class="screen" id="screen-cemetery">
+        <div class="scene-topbar">
+          <button class="btn btn-ghost" data-back="screen-obit">← 回讣告</button>
+        </div>
+        <div class="scene-head">
+          <div class="chapter">仪式 · 安息地</div>
+          <h2>查看墓园</h2>
+          <p id="cemeteryIntro">它就葬在这里。碑上刻着它的名字、生卒和墓志铭，挽联也挂上了——得空了，随时回来看看。</p>
+        </div>
+        <div class="cemetery-tabs" id="cemeteryTabs" role="group" aria-label="切换墓园"></div>
+        <div class="stage">
+          <div id="cemeteryScene" role="img" aria-label="墓园场景"></div>
+        </div>
+        <p class="cemetery-caption" id="cemeteryCaption"></p>
+        <div class="btn-row" style="justify-content:center;">
+          <button class="btn btn-ghost" id="btnRestartCem">再办一场</button>
+        </div>
+        <p class="gentle-line">碑会一直立在这里，来看它的人，不用预约。</p>
       </section>
 
     </div>
@@ -2447,6 +2719,21 @@
       </div>
     </div>
 
+    <!-- ============ 封面 · 随机领取确认小窗（跳过登记表，先说清楚） ============ -->
+    <div class="modal-overlay" id="randomAskModal" hidden>
+      <div class="modal-card ask-card" role="alertdialog" aria-modal="true" aria-labelledby="randomAskTitle">
+        <div class="modal-head">
+          <h3 id="randomAskTitle">随机领取一位逝者</h3>
+          <button type="button" class="modal-close" id="randomAskClose" aria-label="关闭">×</button>
+        </div>
+        <p class="ask-text">随机领取会直接跳过死亡登记表——逝者档案由本馆随机发放，姓名、身份、死因、挽联这些更精细的字段，就没法自己一一挑了。领到哪位，全凭缘分。</p>
+        <div class="ask-btns">
+          <button type="button" class="btn btn-ghost" id="randomAskNo">再想一想</button>
+          <button type="button" class="btn btn-gold" id="randomAskYes">确认领取</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ 离席黑屏（彻底黑，无弹幕） ============ -->
     <div class="leave-overlay" id="leaveOverlay" hidden>你悄悄离开了灵堂一会儿……</div>
 
@@ -2510,6 +2797,15 @@
         <div id="relicList"></div>
         <p class="relic-progress" id="relicProgress"></p>
       </div>
+    </div>
+
+    <!-- ============ 功德阈值特殊提醒（突破/跌破时弹出的横幅） ============ -->
+    <div class="merit-banner" id="meritBanner" hidden role="alertdialog" aria-live="assertive" aria-labelledby="meritBannerTitle">
+      <p class="mb-kicker" id="meritBannerKicker"></p>
+      <p class="mb-title" id="meritBannerTitle"></p>
+      <p class="mb-body" id="meritBannerBody"></p>
+      <p class="mb-val" id="meritBannerVal"></p>
+      <button type="button" class="btn btn-gold mb-btn" id="meritBannerBtn">知道了</button>
     </div>
 
     <div class="toast" id="toast" role="status"></div>
@@ -2753,7 +3049,7 @@
         }
 
         /* ---------- navigation ---------- */
-        var ORDER = ["screen-form","screen-s1","screen-s2","screen-s3","screen-s4","screen-obit"];
+        var ORDER = ["screen-form","screen-coffin","screen-s1","screen-s2","screen-s3","screen-s4","screen-obit","screen-cemetery"];
         function goTo(id){
           var screens = document.querySelectorAll(".screen");
           for (var i=0;i<screens.length;i++) screens[i].classList.remove("active");
@@ -2767,7 +3063,14 @@
           var ledBox = $(id).querySelector(".hall-msg, .vigil-msg, .crem-msg");
           if (ledBox) ledify(ledBox);
           if (id === "screen-s2"){ armVigilIdle(); } else { clearVigilIdle(); hideSignalPill(); }
+          /* arriving at the cemetery always starts at the chosen
+             resting place — the one cemetery where the stone stands */
+          if (id === "screen-cemetery" && typeof coffinSel !== "undefined" && coffinSel) viewingCemetery = coffinSel.cemetery;
+          renderCoffinAll();
+          /* the coffin screen always opens on its first page */
+          if (id === "screen-coffin" && typeof showCoffinPage === "function") showCoffinPage(1);
           var idx = ORDER.indexOf(id);
+          if (id === "screen-random") idx = 0;
           var steps = document.querySelectorAll(".pstep");
           for (var j=0;j<steps.length;j++){
             steps[j].classList.toggle("now", j===idx);
@@ -3557,6 +3860,7 @@
           $("obSignDate").textContent = lang === "en" ? ("Issued " + fmtDate(state.death)) : (fmtDate(state.death) + " 签发");
           layoutObitCouplet();
           $("obitDemoReturn").hidden = !state.demoMode;
+          renderCoffinAll();
         }
 
         /* ---------- form submit ---------- */
@@ -3582,8 +3886,8 @@
           resetRitualState();
           resetBurial();
           applyState();
-          goTo("screen-s1");
-          toast(T("登记完成。灵堂已备好，请家属移步。", "Registration complete. The hall is ready — family, this way."));
+          goTo("screen-coffin");
+          toast(T("登记完成。先替它选一口棺材吧。", "Registration complete. First, choose a coffin for it."));
         }
         $("regForm").addEventListener("submit", function(e){
           e.preventDefault();
@@ -3722,6 +4026,7 @@
           return !!demoLoaded && demoSnapshot === demoFingerprint();
         }
         function renderDemoPreview(p){
+          if (!$("demoPreview")) return;
           $("demoPvName").textContent = p.name[lang];
           var lines = [
             [T("身份", "Identity"), demoIdentityText(p)],
@@ -3756,17 +4061,42 @@
           demoSnapshot = demoFingerprint();
           renderDemoPreview(demoLoaded);
         }
-        $("btnDrawDemo").addEventListener("click", drawDemo);
-        $("btnDemoSwap").addEventListener("click", drawDemo);
+        /* the dispensary: the cover button only opens a small
+           confirmation, because drawing at random skips the whole
+           registration form — and with it, every finer field the family
+           could have picked for themselves. Confirming does NOT go
+           straight to the coffin: it deals one file and lands on the
+           dispensary page (screen-random), where the family can keep
+           swapping with 「换一个」 until one catches their eye, and only
+           「就送它上路」 begins the funeral and goes to the coffin. */
+        $("btnCoverRandom").addEventListener("click", function(){
+          $("randomAskModal").hidden = false;
+        });
+        $("randomAskClose").addEventListener("click", function(){ $("randomAskModal").hidden = true; });
+        $("randomAskNo").addEventListener("click", function(){ $("randomAskModal").hidden = true; });
+        $("randomAskModal").addEventListener("click", function(e){
+          if (e.target === this) this.hidden = true;
+        });
+        $("randomAskYes").addEventListener("click", function(){
+          $("randomAskModal").hidden = true;
+          drawDemo();
+          goTo("screen-random");
+        });
+        $("btnDemoDraw").addEventListener("click", function(){
+          drawDemo();
+        });
+        $("btnDemoAnother").addEventListener("click", function(){
+          drawDemo();
+        });
         $("btnDemoGo").addEventListener("click", function(){
-          if (!demoLoaded) return;
-          beginFuneral(formMatchesDemo());
+          if (!demoLoaded) drawDemo();
+          beginFuneral(true);
         });
         function clearRegistrationForm(){
           demoLoaded = null;
           demoSnapshot = null;
           lastDemoIdx = -1;
-          $("demoPreview").hidden = true;
+          var dpEl = $("demoPreview"); if (dpEl) dpEl.hidden = true;
           $("regForm").reset();
           selectedCompanies = {};
           selectedModels = {};
@@ -3810,7 +4140,122 @@
           var vals = document.querySelectorAll(".merit-val");
           for (var i=0;i<vals.length;i++) vals[i].textContent = txt;
         }
-        function changeMerit(d){ merit += d; updateMerit(); }
+        function changeMerit(d){
+          var prev = merit;
+          merit += d;
+          updateMerit();
+          checkMeritMilestones(prev, merit);
+        }
+
+        /* ---------- merit milestones （功德阈值特殊提醒） ----------
+           The first time merit reaches a line — up or down — a banner
+           plaque pops (see .merit-banner); each line fires only once
+           per funeral, however often merit wanders back across it.
+           The tally itself never stops: merit keeps counting as usual. */
+        var MERIT_MILESTONES = [
+          { v:20,
+            zh:"功德初显", en:"Merit, Newly Shining",
+            bodyZh:"功德已积至 +20。香火初旺，灵前生辉——这位家属，是真把送别当回事。",
+            bodyEn:"Merit has reached +20. The incense is catching and the altar glows a little brighter — this mourner is taking the farewell seriously." },
+          { v:50,
+            zh:"功德无量", en:"Boundless Merit",
+            bodyZh:"功德已积至 +50。「无量」二字，本馆轻易不说：这份心意，逝者在那边能吹三年。",
+            bodyEn:"Merit has reached +50. “Boundless” is not a word this home uses lightly: the deceased will be dining out on this devotion for years over there." },
+          { v:100,
+            zh:"功德圆满", en:"Merit, Perfected",
+            bodyZh:"功德已积至 +100。圆满。本馆开馆以来头一份——家属请留步，锦旗正在赶制。",
+            bodyEn:"Merit has reached +100. Perfected — the first this home has ever seen. Please stay a moment; a banner of commendation is being made." },
+          { v:-5,
+            zh:"功德告罄", en:"Merit, Exhausted",
+            bodyZh:"功德已跌至 −5，账面见底。温馨提示：贡品是供逝者的，不是供家属垫肚子的。",
+            bodyEn:"Merit has fallen to −5; the account is empty. A gentle reminder: the offerings are for the deceased, not for the family's snacking." },
+          { v:-10,
+            zh:"孽缘深重", en:"A Heavy Karmic Debt",
+            bodyZh:"功德已跌至 −10。这已不是手欠，是孽缘了。逝者在那边，怕是都替家属臊得慌。",
+            bodyEn:"Merit has fallen to −10. This is no longer sticky fingers; it is karmic entanglement. Even the deceased is embarrassed on your behalf over there." },
+          { v:-20,
+            zh:"墓园管理处已记录在案", en:"On Record at the Cemetery Office",
+            bodyZh:"功德已跌至 −20。墓园管理处已将家属记录在案：下次办丧事，请自觉走人工审核通道。",
+            bodyEn:"Merit has fallen to −20. The cemetery office has placed the family on record: at the next funeral, please proceed to the manual review lane." },
+          { v:-30,
+            zh:"贡品全灭，家属已吃饱", en:"All Offerings Devoured, the Family Is Full",
+            bodyZh:"功德已跌至 −30。供桌已空，六样贡品全军覆没。逝者尚未动筷，家属先吃饱了——本馆对此保持沉默，只负责记录。",
+            bodyEn:"Merit has fallen to −30. The altar is bare; all six offerings are gone. The deceased never touched a bite, yet the family is full — this home will say nothing, and simply keep the record." }
+        ];
+        var meritFired = {};
+        var meritQueue = [];
+        var meritBannerTimer = null;
+        var meritBannerShowing = false;
+        var meritBannerCurrent = null;
+
+        function checkMeritMilestones(prev, now){
+          if (prev === now) return;
+          var hits = [];
+          MERIT_MILESTONES.forEach(function(m){
+            if (meritFired[m.v]) return;
+            var crossed = m.v > 0 ? (prev < m.v && now >= m.v) : (prev > m.v && now <= m.v);
+            if (crossed){ meritFired[m.v] = true; hits.push(m); }
+          });
+          if (!hits.length) return;
+          /* announce in the order the lines were passed: gains low→high,
+             losses −5→−10→−20 */
+          hits.sort(function(a, b){ return now > prev ? a.v - b.v : b.v - a.v; });
+          hits.forEach(function(m){
+            meritQueue.push({
+              neg: m.v < 0,
+              kickerZh: m.v > 0 ? "本馆功德播报" : "本馆功德警示",
+              kickerEn: m.v > 0 ? "MERIT NOTICE" : "MERIT WARNING",
+              zh: m.zh, en: m.en, bodyZh: m.bodyZh, bodyEn: m.bodyEn,
+              valLabelZh: "功德现值 ", valLabelEn: "Merit now ",
+              valText: (now > 0 ? "+" : "") + now
+            });
+          });
+          pumpMeritBanner();
+        }
+        /* The banner plaque + queue are shared: merit milestones push
+           into meritQueue above, and the vigil's three stats push their
+           own threshold notices into the same queue (see
+           checkVigilMilestones), so two plaques never overlap. */
+        function pumpMeritBanner(){
+          if (meritBannerShowing || !meritQueue.length) return;
+          var m = meritQueue.shift();
+          meritBannerCurrent = m;
+          meritBannerShowing = true;
+          var banner = $("meritBanner");
+          banner.classList.toggle("is-neg", !!m.neg);
+          banner.classList.toggle("is-tier", !!m.tier);
+          $("meritBannerKicker").textContent = T(m.kickerZh, m.kickerEn);
+          $("meritBannerTitle").textContent = T(m.zh, m.en);
+          $("meritBannerBody").textContent = T(m.bodyZh, m.bodyEn);
+          $("meritBannerVal").innerHTML = "";
+          $("meritBannerVal").appendChild(document.createTextNode(T(m.valLabelZh, m.valLabelEn)));
+          var b = document.createElement("b");
+          b.textContent = m.valText;
+          $("meritBannerVal").appendChild(b);
+          $("meritBannerBtn").textContent = T("知道了", "Noted");
+          banner.hidden = false;
+          clearTimeout(meritBannerTimer);
+          /* tier notices are 小播报： they bow out a little sooner */
+          meritBannerTimer = setTimeout(dismissMeritBanner, m.tier ? 4500 : 6500);
+        }
+        function dismissMeritBanner(){
+          clearTimeout(meritBannerTimer);
+          meritBannerTimer = null;
+          var banner = $("meritBanner");
+          if (banner) banner.hidden = true;
+          meritBannerShowing = false;
+          /* a queued notice may carry an onDone — the vigil's forced
+             interventions ride on it: the plaque explains first, and
+             only once it is dismissed does the house act */
+          var done = meritBannerCurrent && meritBannerCurrent.onDone;
+          meritBannerCurrent = null;
+          pumpMeritBanner();
+          if (done) done();
+        }
+        $("meritBannerBtn").addEventListener("click", dismissMeritBanner);
+        $("meritBanner").addEventListener("click", function(e){
+          if (e.target === this) dismissMeritBanner();
+        });
 
         /* ---------- flowers ---------- */
         var FLOWER_STYLE = {
@@ -4270,7 +4715,7 @@
             var span = btn.querySelector("[data-count]");
             if (!span) return;
             var txt = "";
-            if (kind === "flower" && n) txt = T("已献 " + n + " 束", n + " offered");
+            if (kind === "flower" && n) txt = T("已献共 " + n + " 件", n + " items offered");
             else if (kind === "incense" && n) txt = T("已上 " + n + " 炷", n + " lit");
             else if (kind === "candle" && n) txt = T("已点 " + n + " 支", n + " lit");
             else if (kind === "burn" && n) txt = T("已烧 " + n + " 张", n + " burned");
@@ -4806,8 +5251,7 @@
           var acks = SPEAK_ACKS[lang];
           if (scene === "s2"){
             /* 守夜的常驻输入框只负责随口一句，正式告别归「念悼词」 */
-            vigil.clarity -= 2;
-            updateVigilStats();
+            changeVigilStats({ clarity:-2 });
             var vpool = SPEAK_ACKS_VIGIL[lang];
             vigilMsg(T("轻轻说一句", "A Few Soft Words"), vpool[Math.floor(Math.random() * vpool.length)] + T("清醒度 −2。", " Alertness −2."));
             pokeVigilIdle();
@@ -4825,23 +5269,288 @@
         });
 
         /* ---------- vigil (守夜专属六件事) ---------- */
-        var vigil = { clarity:76, missing:0, sanity:100, restarts:0, sleeping:false, away:false, restarting:false, relicItems:null, relicLang:"", relicDone:false };
+        var vigil = { clarity:76, missing:50, sanity:60, restarts:0, sleeping:false, away:false, restarting:false, relicItems:null, relicLang:"", relicDone:false, sleepForced:false, leaveForced:null };
+        /* per-stat floors: 0 until that stat's forced intervention has
+           run, then 10 for the rest of the vigil （锁底） */
+        var vigilFloors = { clarity:0, missing:0, sanity:0 };
+        var vigilForcedFired = {};
+        var vigilForcedTimers = [];
         var currentScreenId = "screen-cover";
         var vigilIdleTimer = null;
         var vigilDreamTimers = [];
 
         function clampStat(v){ return Math.max(0, Math.min(100, v)); }
+        /* ---------- vigil stat tiers （六档提示） ----------
+           Each of the three stats is also graded 0–100 in six tiers.
+           The tier name shows live beside its bar (see .vstat-tier),
+           and crossing into another tier pops one small broadcast
+           (see checkVigilTiers) — on top of, never instead of, the
+           two threshold lines per stat in VIGIL_MILESTONES below. */
+        var VIGIL_TIERS = {
+          clarity: [
+            { max:19,  zh:"最低", en:"Lowest" },
+            { max:39,  zh:"困倦", en:"Drowsy" },
+            { max:59,  zh:"偏低", en:"Low" },
+            { max:79,  zh:"还好", en:"All Right" },
+            { max:89,  zh:"精神", en:"Alert" },
+            { max:100, zh:"活力", en:"Vibrant" }
+          ],
+          missing: [
+            { max:19,  zh:"冷淡", en:"Cold" },
+            { max:39,  zh:"渐冷", en:"Cooling" },
+            { max:59,  zh:"平淡", en:"Calm" },
+            { max:79,  zh:"想念", en:"Missing It" },
+            { max:89,  zh:"思念", en:"Longing" },
+            { max:100, zh:"满溢", en:"Overflowing" }
+          ],
+          sanity: [
+            { max:19,  zh:"崩溃", en:"Collapsed" },
+            { max:39,  zh:"告急", en:"Critical" },
+            { max:59,  zh:"动摇", en:"Shaken" },
+            { max:79,  zh:"还好", en:"All Right" },
+            { max:89,  zh:"稳定", en:"Steady" },
+            { max:100, zh:"回笼", en:"Restored" }
+          ]
+        };
+        function vigilTierIdx(stat, v){
+          var t = VIGIL_TIERS[stat];
+          for (var i = 0; i < t.length; i++){ if (v <= t[i].max) return i; }
+          return t.length - 1;
+        }
+        var vigilTierShown = {};
+        function paintVigilTier(id, stat){
+          var el = $(id);
+          if (!el) return;
+          var idx = vigilTierIdx(stat, vigil[stat]);
+          el.textContent = T(VIGIL_TIERS[stat][idx].zh, VIGIL_TIERS[stat][idx].en);
+          if (vigilTierShown[stat] !== undefined && vigilTierShown[stat] !== idx){
+            el.classList.remove("tier-pop");
+            void el.offsetWidth;
+            el.classList.add("tier-pop");
+          }
+          vigilTierShown[stat] = idx;
+        }
         function updateVigilStats(){
-          vigil.clarity = clampStat(vigil.clarity);
-          vigil.sanity = clampStat(vigil.sanity);
+          vigil.clarity = Math.max(vigilFloors.clarity, clampStat(vigil.clarity));
+          vigil.missing = Math.max(vigilFloors.missing, clampStat(vigil.missing));
+          vigil.sanity = Math.max(vigilFloors.sanity, clampStat(vigil.sanity));
           $("vigilClarity").textContent = vigil.clarity;
           $("vigilMissing").textContent = vigil.missing;
           $("vigilSanity").textContent = vigil.sanity;
           $("vigilClarityBar").style.width = vigil.clarity + "%";
-          $("vigilMissingBar").style.width = Math.min(100, vigil.missing) + "%";
+          $("vigilMissingBar").style.width = vigil.missing + "%";
           $("vigilSanityBar").style.width = vigil.sanity + "%";
+          paintVigilTier("vigilClarityTier", "clarity");
+          paintVigilTier("vigilMissingTier", "missing");
+          paintVigilTier("vigilSanityTier", "sanity");
           var rc = $("vigilRestartCount");
-          if (rc) rc.textContent = vigil.restarts ? T("已试 " + vigil.restarts + " 次", vigil.restarts + " tries so far") : T("理智值 −5 / 次", "Sanity −5 / try");
+          if (rc) rc.textContent = vigil.restarts ? T("已试 " + vigil.restarts + " 次", vigil.restarts + " tries so far") : T("清醒 −5 · 思念 +4 · 理智 −8", "Alertness −5 · Longing +4 · Sanity −8");
+        }
+
+        /* ---------- vigil stat deltas + threshold broadcasts ----------
+           Every one of the six vigil acts moves all three stats at once
+           (initial 76 / 50 / 60, so each has room to rise and to fall);
+           all three clamp at 0–100. The first time a stat crosses one
+           of its two threshold lines in a vigil, a special broadcast
+           plaque drops in — through the same banner queue as the merit
+           milestones — and that line never fires twice in one vigil. */
+        var VIGIL_DELTAS = {
+          oil:     { clarity: 6,  missing: 2,  sanity: 4 },
+          eulogy:  { clarity:-4,  missing: 8,  sanity:-2 },
+          relic:   { clarity:-3,  missing: 6,  sanity: 5 },
+          restart: { clarity:-5,  missing: 4,  sanity:-8 },
+          leave:   { clarity: 8,  missing:-6,  sanity: 6 },
+          sleep:   { clarity:-10, missing: 7,  sanity:-4 }
+        };
+        function fmtDelta(v){ return (v > 0 ? "+" : "−") + Math.abs(v); }
+        function vigilDeltaSuffix(key){
+          var d = VIGIL_DELTAS[key];
+          return T(
+            "清醒度 " + fmtDelta(d.clarity) + " · 思念值 " + fmtDelta(d.missing) + " · 理智值 " + fmtDelta(d.sanity),
+            " Alertness " + fmtDelta(d.clarity) + " · Longing " + fmtDelta(d.missing) + " · Sanity " + fmtDelta(d.sanity)
+          );
+        }
+        var VIGIL_STAT_LABEL = {
+          clarity: ["清醒度", "Alertness"],
+          missing: ["思念值", "Longing"],
+          sanity:  ["理智值", "Sanity"]
+        };
+        var VIGIL_MILESTONES = [
+          { key:"clarity-low", stat:"clarity", dir:"down", v:30,
+            zh:"困意来袭", en:"Sleep Is Closing In",
+            bodyZh:"清醒度已跌破 30。眼皮沉得像两扇炉门——本馆温馨提示：守夜守的是心意，不是眼皮的极限。实在撑不住，偷睡一会，本馆不记过。",
+            bodyEn:"Alertness has dropped below 30. Your eyelids are as heavy as furnace doors — a gentle note from this home: a vigil tests devotion, not eyelid endurance. If you truly cannot hold on, steal a nap. We shan't record it." },
+          { key:"clarity-high", stat:"clarity", dir:"up", v:90,
+            zh:"清醒如初", en:"Wide Awake, As at the Start",
+            bodyZh:"清醒度已涨过 90。灯油添得勤，眼睛亮得像刚开席——逝者若在，怕是都要夸一句：这位家属，精神。",
+            bodyEn:"Alertness has risen above 90. The oil is faithfully topped up and your eyes are as bright as at the opening of the rite — were the deceased here, it would surely say: now, that is a devoted mourner." },
+          { key:"missing-high", stat:"missing", dir:"up", v:80,
+            zh:"思念满溢", en:"Longing, Overflowing",
+            bodyZh:"思念值已涨过 80。满得快溢出灵堂了——本馆已备好纸巾，多出来的那一份，替你收着，慢慢还。",
+            bodyEn:"Longing has risen above 80, full to the very brim of the hall. Tissues are ready — and whatever spills over, this home will keep safe for you, to be returned slowly." },
+          { key:"missing-low", stat:"missing", dir:"down", v:20,
+            zh:"思念渐冷", en:"Longing, Cooling",
+            bodyZh:"思念值已跌破 20。心慢慢静下来了——不是不想了，是想念也需要歇一歇。本馆不予置评，只把灯再拨亮一点。",
+            bodyEn:"Longing has fallen below 20. The heart is settling — not that you miss it any less, but longing, too, needs its rest. This home passes no judgement; we simply turn the lamp up a little." },
+          { key:"sanity-low", stat:"sanity", dir:"down", v:30,
+            zh:"理智告急", en:"Sanity, Critical",
+            bodyZh:"理智值已跌破 30。重启键都快按出包浆了——本馆郑重提醒：它回不来是事实，你别把自己也搭进去。先坐下，喝口水。",
+            bodyEn:"Sanity has fallen below 30. The reboot key is nearly worn smooth — this home must solemnly remind you: that it cannot come back is a fact, and you must not go with it. Sit down. Have some water." },
+          { key:"sanity-high", stat:"sanity", dir:"up", v:90,
+            zh:"理智回笼", en:"Sanity, Back Where It Belongs",
+            bodyZh:"理智值已涨过 90。想通了，接受了，灯也守得稳了——逝者在那边，总算能安心排队，不用再回头看你。",
+            bodyEn:"Sanity has risen above 90. You have made your peace and accepted it, and the lamp is steadily kept — over there, the deceased can finally queue in peace, without looking back at you." }
+        ];
+        var vigilFired = {};
+        function checkVigilMilestones(prev){
+          var hits = [];
+          VIGIL_MILESTONES.forEach(function(m){
+            if (vigilFired[m.key]) return;
+            var p = prev[m.stat], n = vigil[m.stat];
+            var crossed = m.dir === "up" ? (p < m.v && n >= m.v) : (p >= m.v && n < m.v);
+            if (crossed){ vigilFired[m.key] = true; hits.push(m); }
+          });
+          if (!hits.length) return;
+          hits.forEach(function(m){
+            meritQueue.push({
+              neg: m.dir === "down",
+              kickerZh: m.dir === "down" ? "本馆守夜警示" : "本馆守夜播报",
+              kickerEn: m.dir === "down" ? "VIGIL WARNING" : "VIGIL NOTICE",
+              zh: m.zh, en: m.en, bodyZh: m.bodyZh, bodyEn: m.bodyEn,
+              valLabelZh: VIGIL_STAT_LABEL[m.stat][0] + "现值 ",
+              valLabelEn: VIGIL_STAT_LABEL[m.stat][1] + " now ",
+              valText: "" + vigil[m.stat]
+            });
+          });
+          pumpMeritBanner();
+        }
+        /* ---------- vigil forced interventions （最低档强制触发） ----------
+           The first time a stat reaches 0 in a vigil, the house stops
+           asking: a compulsory plaque explains why, and once it is
+           dismissed the intervention runs — clarity is put to sleep
+           (the dream), longing and sanity are made to step away (the
+           black screen). When it is over, that stat is restored to 10
+           and its floor locks at 10 for the rest of the vigil: it can
+           never fall below 10 again. Each stat's intervention fires
+           once per vigil; a new vigil resets all three. */
+        var VIGIL_FORCED = {
+          clarity: { act:"sleep",
+            zh:"强制入梦", en:"Compulsory Dream",
+            bodyZh:"清醒度已归零。眼皮已经不是你的了——本馆依例接管：强制偷睡一会，送你去梦里守夜。醒来之后，清醒度锁回 10，本夜之内，再怎么熬也不会跌破 10。",
+            bodyEn:"Alertness has reached zero. Your eyelids are no longer yours — by house rule, we are taking over: a compulsory stolen nap, off to keep vigil in a dream. When you wake, Alertness will be locked back at 10, and however long you keep watch tonight, it will not fall below 10 again." },
+          missing: { act:"leave",
+            zh:"强制离席", en:"Compulsory Absence",
+            bodyZh:"思念值已归零。心已经凉透了，再守下去，守的就不是夜，是个空壳——本馆依例接管：强制离席片刻，出去透透气。回来之后，思念值锁回 10，本夜之内，不再跌破 10。",
+            bodyEn:"Longing has reached zero. The heart has gone quite cold; to keep watch now would be to guard a shell, not a vigil. By house rule, we are taking over: a compulsory step away, out for some air. When you return, Longing will be locked back at 10, and will not fall below it again tonight." },
+          sanity: { act:"leave",
+            zh:"强制离席", en:"Compulsory Absence",
+            bodyZh:"理智值已归零。脑子已经下了班，谁劝都不回来——本馆依例接管：强制离席片刻，先把人捞回来再说。回来之后，理智值锁回 10，本夜之内，不再跌破 10。",
+            bodyEn:"Sanity has reached zero. The mind has clocked off, and no persuasion will bring it back. By house rule, we are taking over: a compulsory step away — first, we fetch the person back. When you return, Sanity will be locked back at 10, and will not fall below it again tonight." }
+        };
+        function checkVigilForced(){
+          var queued = false;
+          ["clarity", "missing", "sanity"].forEach(function(stat){
+            if (vigilForcedFired[stat]) return;
+            if (vigil[stat] > 0) return;
+            vigilForcedFired[stat] = true;
+            queued = true;
+            var F = VIGIL_FORCED[stat];
+            meritQueue.push({
+              neg: true,
+              kickerZh: "本馆守夜强制播报",
+              kickerEn: "COMPULSORY VIGIL NOTICE",
+              zh: F.zh, en: F.en, bodyZh: F.bodyZh, bodyEn: F.bodyEn,
+              valLabelZh: VIGIL_STAT_LABEL[stat][0] + "现值 ",
+              valLabelEn: VIGIL_STAT_LABEL[stat][1] + " now ",
+              valText: "0",
+              onDone: function(){ runVigilForced(stat, 0); }
+            });
+          });
+          if (queued) pumpMeritBanner();
+        }
+        /* run the intervention once the vigil screen is free: never
+           barge into an ongoing dream or absence — wait, then act.
+           If the vigil is long over, the lock alone is applied so the
+           promise (never below 10 again tonight) still holds. */
+        function runVigilForced(stat, tries){
+          if (currentScreenId === "screen-s2" && !vigil.sleeping && !vigil.away){
+            if (stat === "clarity") doVigilSleep(true);
+            else doVigilLeave(stat);
+            return;
+          }
+          if (tries > 120){
+            vigil[stat] = 10;
+            vigilFloors[stat] = 10;
+            updateVigilStats();
+            return;
+          }
+          vigilForcedTimers.push(setTimeout(function(){ runVigilForced(stat, tries + 1); }, 700));
+        }
+        /* ---------- vigil tier-change broadcasts （换档小播报） ----------
+           Short, solemn, and a little shameless — one small plaque the
+           moment a stat lands in a different tier, up or down. Unlike
+           the threshold lines, a tier notice is not once-per-vigil:
+           every genuine tier change gets exactly one. They ride the
+           same banner queue as merit + thresholds, in a smaller
+           plaque (see .merit-banner.is-tier), tier news first. */
+        var VIGIL_TIER_LINES = {
+          clarity: {
+            upZh:"清醒度升档，现为「{t}」。眼睛亮起来了——本馆点头：这位家属，还能再守三百回合。",
+            upEn:"Alertness moves up a tier — now “{t}”. Eyes bright again. This home nods: this mourner could keep watch for three hundred rounds yet.",
+            downZh:"清醒度降档，现为「{t}」。眼皮有它自己的想法——本馆不催，只把灯芯拨短，省着点亮。",
+            downEn:"Alertness slips a tier — now “{t}”. Eyelids have minds of their own. This home will not hurry you; we simply trim the wick and save the light."
+          },
+          missing: {
+            upZh:"思念值升档，现为「{t}」。越守越满——本馆备的纸巾，怕是要不够用了。",
+            upEn:"Longing moves up a tier — now “{t}”. The longer the vigil, the fuller it gets — the tissues this home prepared may not be enough.",
+            downZh:"思念值降档，现为「{t}」。心慢慢落回原处——不是不想了，只是先喘口气。本馆不予置评。",
+            downEn:"Longing slips a tier — now “{t}”. The heart settles back into place — not missing it any less, just catching its breath. This home passes no judgement."
+          },
+          sanity: {
+            upZh:"理智值升档，现为「{t}」。想通了些，坐得也稳了——逝者在那边，跟着松了口气。",
+            upEn:"Sanity moves up a tier — now “{t}”. A little more peace made, a steadier seat — and over there, the deceased breathes easier too.",
+            downZh:"理智值降档，现为「{t}」。脑子开始跟心抢方向盘了——本馆提醒：先坐下，喝口水，再想。",
+            downEn:"Sanity slips a tier — now “{t}”. The mind is wrestling the heart for the wheel. A note from this home: sit down, have some water, then think."
+          }
+        };
+        function checkVigilTiers(prev){
+          var hits = [];
+          ["clarity", "missing", "sanity"].forEach(function(stat){
+            var pi = vigilTierIdx(stat, prev[stat]);
+            var ni = vigilTierIdx(stat, vigil[stat]);
+            if (pi !== ni) hits.push({ stat:stat, up: ni > pi, tier: VIGIL_TIERS[stat][ni] });
+          });
+          if (!hits.length) return;
+          hits.forEach(function(h){
+            var L = VIGIL_TIER_LINES[h.stat];
+            meritQueue.push({
+              tier: true,
+              neg: !h.up,
+              kickerZh: "本馆守夜档位播报",
+              kickerEn: "VIGIL TIER UPDATE",
+              zh: VIGIL_STAT_LABEL[h.stat][0] + " · " + h.tier.zh,
+              en: VIGIL_STAT_LABEL[h.stat][1] + " · " + h.tier.en,
+              bodyZh: (h.up ? L.upZh : L.downZh).replace("{t}", h.tier.zh),
+              bodyEn: (h.up ? L.upEn : L.downEn).replace("{t}", h.tier.en),
+              valLabelZh: VIGIL_STAT_LABEL[h.stat][0] + "现值 ",
+              valLabelEn: VIGIL_STAT_LABEL[h.stat][1] + " now ",
+              valText: "" + vigil[h.stat]
+            });
+          });
+          pumpMeritBanner();
+        }
+        /* apply a {clarity, missing, sanity} delta set: clamp, repaint
+           the three bars, then check the tier-change notices and the
+           threshold broadcasts */
+        function changeVigilStats(d){
+          var prev = { clarity:vigil.clarity, missing:vigil.missing, sanity:vigil.sanity };
+          vigil.clarity += d.clarity || 0;
+          vigil.missing += d.missing || 0;
+          vigil.sanity += d.sanity || 0;
+          updateVigilStats();
+          checkVigilTiers(prev);
+          checkVigilMilestones(prev);
+          checkVigilForced();
         }
         function vigilMsg(title, body){
           var box = $("vigilMsg");
@@ -4896,7 +5605,7 @@
         function doVigilOil(){
           var first = vigilCounts.oil === 0;
           vigilCounts.oil++;
-          vigil.clarity += 5;
+          changeVigilStats(VIGIL_DELTAS.oil);
           var stage = document.querySelector("#screen-s2 .stage");
           if (stage){
             stage.classList.add("lamp-fed");
@@ -4904,8 +5613,7 @@
           }
           if (first) changeMerit(1);
           var pool = OIL_LINES[lang];
-          vigilMsg(T("添灯油", "Adding Lamp Oil"), pool[Math.floor(Math.random() * pool.length)] + T("清醒度 +5", " Alertness +5") + (first ? T("，功德 +1。", ", Merit +1.") : T("。", ".")));
-          updateVigilStats();
+          vigilMsg(T("添灯油", "Adding Lamp Oil"), pool[Math.floor(Math.random() * pool.length)] + vigilDeltaSuffix("oil") + (first ? T("，功德 +1。", ", Merit +1.") : T("。", ".")));
           pokeVigilIdle();
         }
 
@@ -4942,7 +5650,8 @@
           $("vigilEulogyCustom").value = "";
           closeVigilEulogy();
           vigilCounts.eulogy++;
-          vigilMsg(T("念悼词", "Reading the Eulogy"), text.replace(/\n/g, " ") + T(" 悼词已经念完。它没有回答，但每一句都留在了这里。", " The eulogy is read. It did not answer — but every line of it stayed here."));
+          changeVigilStats(VIGIL_DELTAS.eulogy);
+          vigilMsg(T("念悼词", "Reading the Eulogy"), text.replace(/\n/g, " ") + T(" 悼词已经念完。它没有回答，但每一句都留在了这里。", " The eulogy is read. It did not answer — but every line of it stayed here.") + vigilDeltaSuffix("eulogy") + T("。", "."));
           pokeVigilIdle();
         });
 
@@ -5043,9 +5752,7 @@
             if (!vigil.relicDone){
               vigil.relicDone = true;
               vigilCounts.relic++;
-              vigil.clarity -= 3;
-              vigil.missing += 5;
-              updateVigilStats();
+              changeVigilStats(VIGIL_DELTAS.relic);
             }
             var receipts = lang === "en" ? [
               "The keepsakes are all put away. It just won't be coming back for them.",
@@ -5054,7 +5761,7 @@
               "遗物都收好了，只是它不会回来取了。",
               "你把它留下的东西一件件放回原处。有些数据可以归档，有些思念不行。"
             ];
-            vigilMsg(T("整理遗物", "Tidying the Keepsakes"), receipts[Math.floor(Math.random() * receipts.length)] + T("思念值 +5，清醒度 −3。", " Longing +5, Alertness −3."));
+            vigilMsg(T("整理遗物", "Tidying the Keepsakes"), receipts[Math.floor(Math.random() * receipts.length)] + vigilDeltaSuffix("relic") + T("。", "."));
             pokeVigilIdle();
           }, 650);
         }
@@ -5091,10 +5798,9 @@
           vigilMsg(T("尝试重启", "Reboot Attempt"), T("正在尝试重启……恢复会话中……", "Attempting reboot… restoring the session…"));
           vigil.restartTimer = setTimeout(function(){
             vigil.restarting = false;
-            vigil.sanity -= 5;
+            changeVigilStats(VIGIL_DELTAS.restart);
             var pool = RESTART_FAIL[lang];
-            vigilMsg(T("尝试重启", "Reboot Attempt"), pool[Math.floor(Math.random() * pool.length)] + T("理智值 −5。", " Sanity −5."));
-            updateVigilStats();
+            vigilMsg(T("尝试重启", "Reboot Attempt"), pool[Math.floor(Math.random() * pool.length)] + vigilDeltaSuffix("restart") + T("。", "."));
             pokeVigilIdle();
           }, 1100);
         }
@@ -5122,19 +5828,39 @@
             "Nothing happened at all — but the deceased seems to know you left."
           ]
         };
-        function doVigilLeave(){
+        function doVigilLeave(forcedStat){
           if (vigil.away || vigil.sleeping) return;
           vigil.away = true;
+          vigil.leaveForced = forcedStat || null;
           clearVigilIdle();
           hideSignalPill();
           $("leaveOverlay").hidden = false;
           vigil.leaveTimer = setTimeout(function(){
             $("leaveOverlay").hidden = true;
             vigil.away = false;
+            var lf = vigil.leaveForced;
+            vigil.leaveForced = null;
             vigilCounts.leave++;
-            changeMerit(-1);
-            var pool = LEAVE_INCIDENTS[lang];
-            vigilMsg(T("离席片刻", "Stepped Away"), pool[Math.floor(Math.random() * pool.length)] + T("离席期间照看不周，功德 −1。", " The vigil was left unattended. Merit −1."));
+            changeVigilStats(VIGIL_DELTAS.leave);
+            if (lf){
+              /* forced absence: the house sent you out, so no merit
+                 penalty — and the stat that hit zero comes back
+                 restored to 10, its floor locked at 10 for tonight */
+              vigil[lf] = 10;
+              vigilFloors[lf] = 10;
+              updateVigilStats();
+              vigilMsg(
+                T("强制离席 · 已回席", "Compulsory Absence · Returned"),
+                T(
+                  "本馆强制安排的离席结束了，你已回席。" + VIGIL_STAT_LABEL[lf][0] + "锁回 10——本夜之内，再不会跌破 10。",
+                  "The compulsory absence arranged by this home is over, and you are back at your seat. " + VIGIL_STAT_LABEL[lf][1] + " is locked back at 10 — it will not fall below 10 again tonight."
+                )
+              );
+            } else {
+              changeMerit(-1);
+              var pool = LEAVE_INCIDENTS[lang];
+              vigilMsg(T("离席片刻", "Stepped Away"), pool[Math.floor(Math.random() * pool.length)] + vigilDeltaSuffix("leave") + T("。离席期间照看不周，功德 −1。", ". The vigil was left unattended. Merit −1."));
+            }
             pokeVigilIdle();
           }, 2600);
         }
@@ -5274,25 +6000,53 @@
           }
           return lines.slice(0, 6);
         }
-        function wakeFromDream(){
+        var dreamHideTimer = null;
+        function hideDreamOverlayNow(){
+          if (dreamHideTimer){ clearTimeout(dreamHideTimer); dreamHideTimer = null; }
+          var ov = $("dreamOverlay");
+          ov.classList.remove("waking");
+          ov.hidden = true;
+        }
+        function wakeFromDream(fromTap){
           vigilDreamTimers.forEach(clearTimeout);
           vigilDreamTimers = [];
-          $("dreamOverlay").hidden = true;
-          if (!vigil.sleeping) return;
+          if (!vigil.sleeping){ hideDreamOverlayNow(); return; }
           vigil.sleeping = false;
+          var wasForced = vigil.sleepForced;
+          vigil.sleepForced = false;
           vigilCounts.sleep++;
-          vigil.missing += 1;
-          updateVigilStats();
+          changeVigilStats(VIGIL_DELTAS.sleep);
           var c = $("s2CandleR");
           if (c) c.classList.add("candle-tilted");
           var sticks = $("s2BaseSticks");
           if (sticks) sticks.classList.add("burnt-down");
-          vigilMsg(T("偷睡一会", "A Stolen Nap"), T("你伏在灵前睡了一会儿。梦很短，思念很长。思念值 +1。", "You dozed a while, head bowed by the coffin. The dream was short; the longing is long. Longing +1."));
+          if (wasForced){
+            /* forced nap: clarity comes back restored to 10, its
+               floor locked at 10 for the rest of the vigil */
+            vigil.clarity = 10;
+            vigilFloors.clarity = 10;
+            updateVigilStats();
+            vigilMsg(T("强制偷睡 · 已醒", "Compulsory Nap · Awake"), T("本馆强制安排的这一觉睡完了，眼皮归你了。清醒度锁回 10——本夜之内，再怎么熬，也不会跌破 10。", "The compulsory nap arranged by this home is over, and your eyelids are your own again. Alertness is locked back at 10 — however long you keep watch tonight, it will not fall below 10."));
+          } else {
+            vigilMsg(T("偷睡一会", "A Stolen Nap"), T("你伏在灵前睡了一会儿。梦很短，思念很长。", "You dozed a while, head bowed by the coffin. The dream was short; the longing is long.") + vigilDeltaSuffix("sleep") + T("。", "."));
+          }
           pokeVigilIdle();
+          if (fromTap){
+            /* 点醒的这一下还没走完：遮罩先淡出但不移除，留在原地把
+               这次点击彻底吃掉，等手势完全结束后再撤，免得穿透到
+               下面那颗「念悼词」之类的按钮上 */
+            var ov = $("dreamOverlay");
+            ov.classList.add("waking");
+            if (dreamHideTimer) clearTimeout(dreamHideTimer);
+            dreamHideTimer = setTimeout(hideDreamOverlayNow, 500);
+          } else {
+            hideDreamOverlayNow();
+          }
         }
-        function doVigilSleep(){
+        function doVigilSleep(forced){
           if (vigil.sleeping || vigil.away) return;
           vigil.sleeping = true;
+          vigil.sleepForced = !!forced;
           clearVigilIdle();
           hideSignalPill();
           var lines = composeDream();
@@ -5306,13 +6060,27 @@
             box.appendChild(d);
             return d;
           });
+          if (dreamHideTimer){ clearTimeout(dreamHideTimer); dreamHideTimer = null; }
+          $("dreamOverlay").classList.remove("waking");
           $("dreamOverlay").hidden = false;
           spans.forEach(function(d, i){
             vigilDreamTimers.push(setTimeout(function(){ d.classList.add("show"); }, 450 + i * 1050));
           });
           vigilDreamTimers.push(setTimeout(wakeFromDream, 450 + lines.length * 1050 + 1700));
         }
-        $("dreamOverlay").addEventListener("click", wakeFromDream);
+        /* 梦境遮罩独占整个手势：按下、抬起、触摸、点击全在这一层截停，
+           一下都不漏给遮罩下面的按钮 */
+        (function(){
+          var dreamOv = $("dreamOverlay");
+          ["pointerdown", "pointerup", "mousedown", "mouseup", "touchstart", "touchend"].forEach(function(type){
+            dreamOv.addEventListener(type, function(e){ e.stopPropagation(); }, { passive:true });
+          });
+          dreamOv.addEventListener("click", function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            wakeFromDream(true);
+          });
+        })();
 
         document.querySelectorAll("[data-vigil]").forEach(function(btn){
           btn.addEventListener("click", function(){
@@ -5369,14 +6137,20 @@
           vigilDreamTimers = [];
           clearTimeout(vigil.restartTimer);
           clearTimeout(vigil.leaveTimer);
-          vigil = { clarity:76, missing:0, sanity:100, restarts:0, sleeping:false, away:false, restarting:false, relicItems:null, relicLang:"", relicDone:false };
+          vigil = { clarity:76, missing:50, sanity:60, restarts:0, sleeping:false, away:false, restarting:false, relicItems:null, relicLang:"", relicDone:false, sleepForced:false, leaveForced:null };
           vigilCounts = { oil:0, eulogy:0, relic:0, leave:0, sleep:0 };
+          vigilFired = {};
+          vigilTierShown = {};
+          vigilForcedFired = {};
+          vigilFloors = { clarity:0, missing:0, sanity:0 };
+          vigilForcedTimers.forEach(clearTimeout);
+          vigilForcedTimers = [];
           var c = $("s2CandleR");
           if (c) c.classList.remove("candle-tilted");
           var sticks = $("s2BaseSticks");
           if (sticks) sticks.classList.remove("burnt-down");
           $("leaveOverlay").hidden = true;
-          $("dreamOverlay").hidden = true;
+          hideDreamOverlayNow();
           $("eulogyModal").hidden = true;
           $("relicModal").hidden = true;
           $("signalModal").hidden = true;
@@ -5391,6 +6165,14 @@
         /* ---------- reset (new registration / restart) ---------- */
         function resetRitualState(){
           merit = 0;
+          meritFired = {};
+          meritQueue = [];
+          clearTimeout(meritBannerTimer);
+          meritBannerTimer = null;
+          meritBannerShowing = false;
+          meritBannerCurrent = null;
+          var mb = $("meritBanner");
+          if (mb) mb.hidden = true;
           stealCount = 0;
           stolenItems = [];
           actCounts = {
@@ -5544,11 +6326,11 @@
           var offEl = $("cremOfferingsSummary");
           if (offEl){
             var offLines = lang === "en" ? [
-              "Flowers " + (c1.flower || 0) + " bouquets · Incense " + (c1.incense || 0) + " sticks · Candles " + (c1.candle || 0),
+              "Flowers " + (c1.flower || 0) + " items · Incense " + (c1.incense || 0) + " sticks · Candles " + (c1.candle || 0),
               "Offerings " + (c1.offering || 0) + " portions · Paper burned " + (c1.burn || 0) + " sheets",
               "Snuck away by the family: " + stealCount + " items (" + stealCount + " sneaks) · " + offerings.length + " items remain on the altar"
             ] : [
-              "献花 " + (c1.flower || 0) + " 束 · 上香 " + (c1.incense || 0) + " 炷 · 点蜡烛 " + (c1.candle || 0) + " 支",
+              "献花 " + (c1.flower || 0) + " 件 · 上香 " + (c1.incense || 0) + " 炷 · 点蜡烛 " + (c1.candle || 0) + " 支",
               "上供 " + (c1.offering || 0) + " 份 · 烧纸 " + (c1.burn || 0) + " 张",
               "被偷吃贡品偷走 " + stealCount + " 件（偷吃 " + stealCount + " 次）· 供桌还剩 " + offerings.length + " 件"
             ];
@@ -6101,12 +6883,12 @@
           "灯还亮着，棺里很安静。慢慢守，不用说话也行。":"The lamp is still lit and the coffin is quiet. Keep watch slowly — no need to talk.",
           "守夜 · 六件事":"The Vigil · Six Things",
           "清醒度":"Alertness", "思念值":"Longing", "理智值":"Sanity",
-          "添灯油":"Add Lamp Oil", "清醒度 +5":"Alertness +5",
-          "念悼词":"Recite the Eulogy", "念给它听":"Read it aloud for it",
-          "整理遗物":"Tidy the Keepsakes", "思念值 +5":"Longing +5",
-          "尝试重启":"Try to Reboot", "理智值 −5 / 次":"Sanity −5 / try",
-          "离席片刻":"Step Away a Moment", "功德 −1":"Merit −1",
-          "偷睡一会":"Sneak a Nap", "思念值 +1":"Longing +1",
+          "添灯油":"Add Lamp Oil", "清醒 +6 · 思念 +2 · 理智 +4":"Alertness +6 · Longing +2 · Sanity +4",
+          "念悼词":"Recite the Eulogy", "清醒 −4 · 思念 +8 · 理智 −2":"Alertness −4 · Longing +8 · Sanity −2",
+          "整理遗物":"Tidy the Keepsakes", "清醒 −3 · 思念 +6 · 理智 +5":"Alertness −3 · Longing +6 · Sanity +5",
+          "尝试重启":"Try to Reboot", "清醒 −5 · 思念 +4 · 理智 −8":"Alertness −5 · Longing +4 · Sanity −8",
+          "离席片刻":"Step Away a Moment", "清醒 +8 · 思念 −6 · 理智 +6":"Alertness +8 · Longing −6 · Sanity +6",
+          "偷睡一会":"Sneak a Nap", "清醒 −10 · 思念 +7 · 理智 −4":"Alertness −10 · Longing +7 · Sanity −4",
           "选一段本馆备好的，或者自己写一段——念出声来，它才听得见。":"Pick one this home has prepared, or write your own — read it aloud, so it can hear you.",
           "自己写一段（写了就念你写的）":"Write your own (yours is the one that gets read)",
           "开始宣读":"Begin Reading",
@@ -6183,7 +6965,41 @@
           "Error 410：你寻找的模型已不在人间。":"Error 410: The model you are looking for is no longer of this world.",
           "信号源已注销。这段波形，大概只是你太想它了，耳朵自己补出来的。":"The signal source has been deregistered. This waveform is probably just your ears filling in the silence, because you miss it.",
           "知道了":"I See",
-          "再想一想":"Let Me Think"
+          "再想一想":"Let Me Think",
+          "选棺":"Coffin", "墓园":"Cemetery", "← 回选棺":"← Back to the Coffin",
+          "仪式 · 前序":"Rite · Prelude",
+          "选棺 · 备礼":"Choose the Coffin · Prepare the Rites",
+          "登记完了，先替它挑一口合身的棺材，再备上陪葬品和花束。选好的这一套，会陪它走完灵堂、守夜、火化和下葬整场。":"Registration is done. Now pick a coffin that fits, and prepare its burial goods and bouquet. What you choose here stays with it through the hall, the vigil, the cremation and the burial.",
+          "一 · 棺材样式":"1 · Coffin Style",
+          "二 · 刷个颜色":"2 · Paint It a Colour",
+          "三 · 专属陪葬品":"3 · Its Own Burial Goods",
+          "四 · 亲手扎花束":"4 · Tie the Bouquet by Hand",
+          "三层花圈，十六个位置：外层 8 朵、中层 5 朵、内层 3 朵。点一个位置选中，再从下面挑一朵花放上去；放好一朵，会自动跳到下一个位置。点「空位」可以把当前这朵摘下。":"Three rings, sixteen places: 8 outside, 5 in the middle, 3 at the heart. Tap a place to select it, then pick a flower below to set it in — once placed, it steps on to the next place by itself. Tap 'Empty place' to take the current bloom back out.",
+          "一键扎满白菊":"Fill It All with White Chrysanthemums",
+          "全部摘下":"Take Them All Out",
+          "五 · 安葬墓园":"5 · Burial Cemetery",
+          "纸扎的、赛博的都行，选几件都随你——烧过去，它在那边有伴。":"Paper or cyber, as many as you like — sent over with it, so it has company on the other side.",
+          "先定下葬在哪儿。仪式走完，领了讣告，就能去墓园看它。":"Decide where it will rest. Once the rites are done and the obituary collected, you can visit it at the cemetery.",
+          "棺木备好，进灵堂开路 →":"The Coffin Is Ready — To the Hall →",
+          "三 · 安葬墓园":"3 · Burial Cemetery",
+          "四 · 专属陪葬品":"4 · Its Own Burial Goods",
+          "五 · 亲手扎花束":"5 · Tie the Bouquet by Hand",
+          "第 1 页 / 共 2 页 · 先定棺材与墓园":"Page 1 of 2 · First, the Coffin and the Cemetery",
+          "第 2 页 / 共 2 页 · 再备陪葬品与花束":"Page 2 of 2 · Then, Burial Goods and the Bouquet",
+          "下一步：陪葬品与花束 →":"Next: Burial Goods & the Bouquet →",
+          "← 上一步：棺材与墓园":"← Back: The Coffin & the Cemetery",
+          "随机领取会直接跳过死亡登记表——逝者档案由本馆随机发放，姓名、身份、死因、挽联这些更精细的字段，就没法自己一一挑了。领到哪位，全凭缘分。":"Drawing at random skips the registration form entirely — the file is dealt out by this home, so the finer fields (name, identity, cause of death, couplet) can't be picked one by one. Who you get is up to fate.",
+          "确认领取，直接选棺":"Draw One — Straight to the Coffin",
+          "确认领取":"Confirm — Draw One",
+          "← 回封面":"← Back to the Cover",
+          "领到哪位全凭缘分——没眼缘就换，换到合眼缘的，再送它上路。":"Who you get is up to fate — if there's no spark, swap. When one catches your eye, send it on its way.",
+          "棺材不在贵贱，合身就好——它这一路，要躺得舒服。":"A coffin need not be grand, only fitting — it should rest comfortably on this last journey.",
+          "查看墓园 →":"Visit the Cemetery →",
+          "← 回讣告":"← Back to the Obituary",
+          "仪式 · 安息地":"Rite · The Resting Place",
+          "查看墓园":"Visit the Cemetery",
+          "它就葬在这里。碑上刻着它的名字、生卒和墓志铭，挽联也挂上了——得空了，随时回来看看。":"It rests here. Its name, its dates and its epitaph are carved on the stone, and the couplet is hung — come back and visit whenever you have a moment.",
+          "碑会一直立在这里，来看它的人，不用预约。":"The stone will stand here always. Visitors need no appointment."
         };
         var STATIC_TEXT_REV = {};
         (function(){ for (var k in STATIC_TEXT) STATIC_TEXT_REV[STATIC_TEXT[k]] = k; })();
@@ -6195,7 +7011,8 @@
             "speak-s1":"想对它说句话……", "speak-s2":"守夜时，轻轻对它说一句……",
             "vigilEulogyCustom":"想对它正式说的话，写在这里……",
             "pickerCustom":"或自己写一个", "pickerCustom2":"没列出的公司 / 平台，自己写", "pickerCustom3":"没列出的模型，自己写", "ritualCustom":"自己写一个",
-            "cpUp":"例如：绝世好模", "cpDown":"例如：万古长青", "cpHead":"例如：永不离线"
+            "cpUp":"例如：绝世好模", "cpDown":"例如：万古长青", "cpHead":"例如：永不离线",
+            "wreathText":"花束上的字，例如：永远怀念"
           },
           en: {
             "f-name":"The name you gave it", "f-epitaph":"One line is enough — in your own hand",
@@ -6204,7 +7021,8 @@
             "speak-s1":"Say something to it…", "speak-s2":"Say something softly to it, here at the vigil…",
             "vigilEulogyCustom":"The formal words you want to say to it, written here…",
             "pickerCustom":"Or write your own", "pickerCustom2":"A company or platform not listed — write it", "pickerCustom3":"A model not listed — write it here", "ritualCustom":"Write your own",
-            "cpUp":"e.g. A model beyond compare", "cpDown":"e.g. Green forever in memory", "cpHead":"e.g. Never offline"
+            "cpUp":"e.g. A model beyond compare", "cpDown":"e.g. Green forever in memory", "cpHead":"e.g. Never offline",
+            "wreathText":"Words for the bouquet, e.g. Forever missed"
           }
         };
         function translateDom(map){
@@ -6283,7 +7101,7 @@
           of.setAttribute("letter-spacing", en ? "2.5" : "4");
           var ph = PLACEHOLDERS[lang];
           for (var pid in ph){ var pel = $(pid); if (pel) pel.placeholder = ph[pid]; }
-          ["pickerClose","ritualClose","signalClose","coupletClose","eulogyClose","relicClose"].forEach(function(cid){
+          ["pickerClose","ritualClose","signalClose","coupletClose","eulogyClose","relicClose","randomAskClose"].forEach(function(cid){
             var c = $(cid); if (c) c.setAttribute("aria-label", en ? "Close" : "关闭");
           });
           $("dragUrn").setAttribute("aria-label", en
@@ -6329,6 +7147,11 @@
             renderRelicList();
           }
           applyState();
+          if (typeof demoLoaded !== "undefined" && demoLoaded){
+            fillDemoForm(demoLoaded);
+            demoSnapshot = demoFingerprint();
+            renderDemoPreview(demoLoaded);
+          }
           /* pristine message boxes return to their (new-language) greetings */
           var s1Counts = actCounts.s1;
           if (!merit && !stealCount && !speakCounts.s1 && !(s1Counts.flower || s1Counts.incense || s1Counts.candle || s1Counts.offering || s1Counts.burn)){
@@ -6365,6 +7188,771 @@
             ["hallMsg","vigilMsg","cremMsg","burialMsg"].forEach(function(id){ ledify($(id)); });
           });
         }
+
+        /* ---------- 选棺 · 备礼 + 查看墓园 ----------
+           One coffin, chosen once, carried through the whole funeral:
+           the same style + colour is re-rendered into the hall, the
+           vigil (where it also re-paints the big trapezoid coffin),
+           the cremation hall and the burial ground, and the chosen
+           cemetery is where the final cemetery visit takes place. */
+        var COFFIN_STYLES = [
+          { id:"crystal", zh:"水晶棺", en:"Crystal Coffin", base:"#a8c8dc", trim:"#eaf6ff" },
+          { id:"nanmu", zh:"楠木棺", en:"Nanmu Wood Coffin", base:"#7a4a22", trim:"#c9a44a" },
+          { id:"metal", zh:"金属棺", en:"Metal Coffin", base:"#8f959c", trim:"#e8ecf0" },
+          { id:"data", zh:"数据棺", en:"Data Coffin", base:"#1c2a24", trim:"#8ae6b8" },
+          { id:"paper", zh:"纸扎棺", en:"Paper Coffin", base:"#d9b96a", trim:"#96762a" },
+          { id:"stardust", zh:"星尘棺", en:"Stardust Coffin", base:"#232c4e", trim:"#e7cd8a" }
+        ];
+        var COFFIN_COLORS = [
+          { hex:null, zh:"原色", en:"Original" },
+          { hex:"#c9a44a", zh:"鎏金", en:"Gilt Gold" },
+          { hex:"#7e1d23", zh:"酒红", en:"Wine Red" },
+          { hex:"#26262b", zh:"玄黑", en:"Obsidian" },
+          { hex:"#ddd6c2", zh:"月白", en:"Moon White" },
+          { hex:"#3f5a46", zh:"松绿", en:"Pine Green" },
+          { hex:"#33506e", zh:"海蓝", en:"Deep Sea Blue" },
+          { hex:"#6e3a2e", zh:"赭褐", en:"Ochre Brown" }
+        ];
+        var COFFIN_GOODS = [
+          { id:"cat", zh:"纸扎小猫", en:"Paper Cat", tint:"#d9906f" },
+          { id:"dog", zh:"纸扎小狗", en:"Paper Dog", tint:"#b08d57" },
+          { id:"horse", zh:"纸扎小马", en:"Paper Horse", tint:"#8a7a5c" },
+          { id:"fish", zh:"纸扎金鱼", en:"Paper Goldfish", tint:"#e08a3c" },
+          { id:"phone", zh:"纸扎手机", en:"Paper Phone", tint:"#5f7f9e" },
+          { id:"car", zh:"纸扎跑车", en:"Paper Sports Car", tint:"#b0483f" },
+          { id:"villa", zh:"纸扎别墅", en:"Paper Villa", tint:"#9c6b52" },
+          { id:"ingot", zh:"纸扎金元宝", en:"Paper Gold Ingots", tint:"#c9a44a" },
+          { id:"bird", zh:"机械小鸟", en:"Mechanical Bird", tint:"#6fae9c" },
+          { id:"bone", zh:"数据骨头", en:"Data Bone", tint:"#8ae6b8" }
+        ];
+        /* ---------- hand-drawn SVG burial goods ----------
+           Every good is a little ink-outlined silhouette in the same
+           hand-drawn line style as the rest of the hall. The fill is
+           dyeable per item: a good with its own brushed colour wears
+           that; one without follows the coffin's colour; and if the
+           coffin is left its original colour too, each good keeps its
+           own tint. Details are shades of the dye. */
+        var goodsColors = {};
+        function shade(hex, f){
+          var n = parseInt(String(hex).slice(1), 16);
+          if (isNaN(n)) return hex;
+          var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+          if (f < 1){ r *= f; g *= f; b *= f; }
+          else { r += (255 - r) * (f - 1); g += (255 - g) * (f - 1); b += (255 - b) * (f - 1); }
+          return "rgb(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + ")";
+        }
+        function goodsDye(g){ return goodsColors[g.id] || coffinSel.color || g.tint; }
+        function goodsColorName(g){
+          if (goodsColors[g.id]){
+            for (var i=0;i<COFFIN_COLORS.length;i++)
+              if (COFFIN_COLORS[i].hex === goodsColors[g.id]) return lang === "en" ? COFFIN_COLORS[i].en : COFFIN_COLORS[i].zh;
+          }
+          if (coffinSel.color) return T("跟随棺色 · ", "Follows the coffin · ") + coffinColorName();
+          return T("固有色", "Its own colour");
+        }
+        function goodsArt(g){
+          var dye = goodsDye(g), dark = shade(dye, .58), lite = shade(dye, 1.5), ink = "#2a2115";
+          var S = 'stroke="' + ink + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"';
+          var S1 = 'stroke="' + ink + '" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"';
+          switch (g.id){
+            case "cat": return ""
+              + '<path d="M33 41 q10 0 9 -9 q0 -4 -3.4 -4.6 q-3 -.5 -3.4 3 q-.4 4.6 -4.4 5.4 z" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M13.5 13 L16 3.5 L22.5 9.5 Z" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M34.5 13 L32 3.5 L25.5 9.5 Z" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M15 42 q-3 -15 3.4 -20.4 q2.8 -2.3 6.1 -2.3 q3.3 0 6.1 2.3 q6.4 5.4 3.4 20.4 q-9.5 2.2 -19 0 z" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="24" cy="14.5" r="8.6" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="24" cy="30.5" rx="4.6" ry="6.2" fill="' + lite + '" opacity=".55"/>'
+              + '<circle cx="20.6" cy="14" r="1.3" fill="' + ink + '"/><circle cx="27.4" cy="14" r="1.3" fill="' + ink + '"/>'
+              + '<path d="M22.6 17.6 h2.8 M24 17.6 v1.4 M21 12.2 q-4 -1.2 -7 .4 M21.4 16.4 q-4 .4 -6.6 2.4 M27 12.2 q4 -1.2 7 .4 M26.6 16.4 q4 .4 6.6 2.4" stroke="' + ink + '" stroke-width="1" fill="none" stroke-linecap="round" opacity=".75"/>';
+            case "dog": return ""
+              + '<path d="M11 27 q-7 -4 -6 -13" stroke="' + ink + '" stroke-width="5.6" fill="none" stroke-linecap="round"/>'
+              + '<path d="M11 27 q-7 -4 -6 -13" stroke="' + dye + '" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+              + '<rect x="13" y="31" width="4.4" height="10" rx="2" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="29" y="31" width="4.4" height="10" rx="2" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="23" cy="27" rx="13.5" ry="8.6" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="36" cy="17" r="7.6" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="42.4" cy="20" rx="4" ry="3.1" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M31.5 11 q-6.4 1.4 -5.4 9 q.6 3.8 4 3.4 q3.8 -3.4 1.4 -12.4 z" fill="' + dark + '" ' + S + '/>'
+              + '<circle cx="45" cy="19" r="1.2" fill="' + ink + '"/><circle cx="37.4" cy="15.4" r="1.3" fill="' + ink + '"/>'
+              + '<path d="M29.8 20.6 q2 3.4 5.8 4.2" stroke="' + ink + '" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+              + '<circle cx="32.6" cy="24.8" r="1.5" fill="#c9a44a"/>'
+              + '<path d="M13 21.6 q10 -3 20 -.4" stroke="' + dark + '" stroke-width="1.2" fill="none" opacity=".55"/>';
+            case "horse": return ""
+              + '<path d="M11.4 19 q-6 5 -5 14" stroke="' + ink + '" stroke-width="5.4" fill="none" stroke-linecap="round"/>'
+              + '<path d="M11.4 19 q-6 5 -5 14" stroke="' + dark + '" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+              + '<rect x="13.6" y="28" width="3.4" height="12" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="19" y="29" width="3.4" height="11" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="28" y="29" width="3.4" height="11" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="33.4" y="28" width="3.4" height="12" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="24" cy="23" rx="13" ry="7.6" fill="' + dye + '" ' + S + '/>'
+              + '<polygon points="30,24 37,9 43,12 37,25" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="41" cy="10" rx="5.4" ry="3.6" transform="rotate(38 41 10)" fill="' + dye + '" ' + S + '/>'
+              + '<polygon points="36.8,5.6 39.2,1.8 41,5.8" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M36.2 9.6 q-3.2 5 -3.4 10.8" stroke="' + dark + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
+              + '<circle cx="42.2" cy="9.2" r="1.1" fill="' + ink + '"/><circle cx="44.4" cy="12.2" r=".8" fill="' + ink + '"/>'
+              + '<path d="M13.4 40.6 h3.8 M18.8 40.6 h3.8 M27.8 40.6 h3.8 M33.2 40.6 h3.8" stroke="' + ink + '" stroke-width="2" stroke-linecap="round"/>';
+            case "fish": return ""
+              + '<circle cx="7" cy="9" r="2.2" fill="none" stroke="' + ink + '" stroke-width="1" opacity=".55"/>'
+              + '<circle cx="13.4" cy="5.2" r="1.4" fill="none" stroke="' + ink + '" stroke-width="1" opacity=".55"/>'
+              + '<path d="M33 24 L44 14 q2 10 0 20 Z" fill="' + lite + '" ' + S + '/>'
+              + '<path d="M5 24 q7.4 -11.4 18 -10.6 q9.4 .7 12.4 10.6 q-3 9.9 -12.4 10.6 q-10.6 .8 -18 -10.6 z" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M17 14.2 q2.4 -5.6 8 -5.8 q-1.4 3.8 -2.4 6.4 z" fill="' + dark + '" ' + S + '/>'
+              + '<path d="M20 33.8 q1.6 4.4 6 5 q-.8 -3.4 -1.8 -5.8 z" fill="' + dark + '" ' + S + '/>'
+              + '<path d="M16.4 16.4 q3.4 7.6 0 15.2" stroke="' + ink + '" stroke-width="1.1" fill="none" opacity=".7"/>'
+              + '<path d="M22 19 q2.6 5 0 10 M27.4 19.4 q2.2 4.6 0 9.2" stroke="' + dark + '" stroke-width="1" fill="none" opacity=".55"/>'
+              + '<circle cx="11.4" cy="22" r="1.7" fill="' + ink + '"/><circle cx="10.8" cy="21.4" r=".6" fill="#fff"/>';
+            case "phone": return ""
+              + '<path d="M39.4 4.6 v7 M35.9 8.1 h7" stroke="' + dark + '" stroke-width="1.6" stroke-linecap="round"/>'
+              + '<rect x="15" y="4.6" width="18" height="38.8" rx="4.6" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="18.6" y="11" width="10.8" height="21.6" fill="' + lite + '" ' + S1 + '/>'
+              + '<path d="M21.4 7.8 h5.2" stroke="' + ink + '" stroke-width="1.2" stroke-linecap="round"/>'
+              + '<path d="M21 16.6 h6 M21 20.6 h6 M21 24.6 h4" stroke="' + ink + '" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>'
+              + '<circle cx="24" cy="37.6" r="2.1" fill="none" stroke="' + ink + '" stroke-width="1.2"/>';
+            case "car": return ""
+              + '<path d="M3.6 30.6 q-.6 -4.8 4 -5.8 l5.6 -1 q2.8 -5.6 9.4 -6.8 q7.4 -1.3 12.2 3.6 l2.6 3.2 q5.2 .8 5.6 4.4 q.3 2.4 -1.6 3.8 H5.4 q-1.6 -1 -1.8 -2.8 z" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M16.8 23.4 q2.2 -4.2 7.4 -5 q4.8 -.7 8.4 2.8 l1.6 2.2 H16.8 z" fill="' + lite + '" ' + S1 + '/>'
+              + '<path d="M25.2 18.2 v5.2 M27.4 24.6 v4.6" stroke="' + ink + '" stroke-width="1" opacity=".6"/>'
+              + '<circle cx="42.4" cy="27" r="1.3" fill="' + lite + '"/>'
+              + '<circle cx="13.4" cy="31.4" r="4.6" fill="' + ink + '"/><circle cx="13.4" cy="31.4" r="2" fill="' + dye + '"/>'
+              + '<circle cx="35.6" cy="31.4" r="4.6" fill="' + ink + '"/><circle cx="35.6" cy="31.4" r="2" fill="' + dye + '"/>'
+              + '<path d="M4 39 H44" stroke="' + ink + '" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>';
+            case "villa": return ""
+              + '<rect x="31.4" y="9.4" width="4.6" height="8" fill="' + dark + '" ' + S + '/>'
+              + '<rect x="11" y="22.6" width="26" height="17.4" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M6.6 23.4 L24 8.6 L41.4 23.4 Z" fill="' + dark + '" ' + S + '/>'
+              + '<rect x="14.2" y="26.4" width="5" height="5" fill="' + lite + '" ' + S1 + '/>'
+              + '<rect x="28.8" y="26.4" width="5" height="5" fill="' + lite + '" ' + S1 + '/>'
+              + '<path d="M16.7 26.4 v5 M14.2 28.9 h5 M31.3 26.4 v5 M28.8 28.9 h5" stroke="' + ink + '" stroke-width=".8" opacity=".6"/>'
+              + '<rect x="21" y="29.4" width="6" height="10.6" fill="' + dark + '" ' + S + '/>'
+              + '<circle cx="25.4" cy="35" r=".9" fill="' + lite + '"/>'
+              + '<circle cx="8.6" cy="38.4" r="3" fill="' + dark + '" ' + S + '/>'
+              + '<circle cx="39.4" cy="38.4" r="3" fill="' + dark + '" ' + S + '/>'
+              + '<path d="M19 43 H29" stroke="' + ink + '" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>';
+            case "ingot": return ""
+              + '<path d="M7.4 29.4 q1.4 8.6 9.6 9.6 h13.9 q8.2 -1 9.6 -9.6 q.5 -3.4 -2.4 -4.4 q-5.9 2.9 -13.1 2.9 q-7.2 0 -13.1 -2.9 q-2.9 1 -2.4 4.4 z" fill="' + dye + '" ' + S + '/>'
+              + '<ellipse cx="24" cy="21.4" rx="7.4" ry="5.6" fill="' + lite + '" ' + S + '/>'
+              + '<ellipse cx="24" cy="21.4" rx="3.6" ry="2.6" fill="none" stroke="' + dark + '" stroke-width="1.1" opacity=".7"/>'
+              + '<path d="M13 31.4 q2 4.4 6.4 5.6" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".5"/>'
+              + '<path d="M12.4 38.6 H35.6" stroke="' + dark + '" stroke-width="1.2" stroke-linecap="round" opacity=".6"/>';
+            case "bird": return ""
+              + '<path d="M17 17.4 L12.4 10.6" stroke="' + ink + '" stroke-width="1.8" stroke-linecap="round"/>'
+              + '<circle cx="9.4" cy="8.4" r="2.8" fill="' + lite + '" ' + S + '/>'
+              + '<circle cx="15.2" cy="7" r="2.8" fill="' + lite + '" ' + S + '/>'
+              + '<path d="M12.4 23.4 L3.6 19.4 q.8 5.4 3 8.4 l6.4 -1.2 z" fill="' + dark + '" ' + S + '/>'
+              + '<ellipse cx="23" cy="27" rx="11.4" ry="8.4" transform="rotate(-8 23 27)" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="33.4" cy="18.4" r="6.2" fill="' + dye + '" ' + S + '/>'
+              + '<path d="M38.8 16.2 L45.6 18.6 L38.8 21.4 Z" fill="#c9a44a" ' + S + '/>'
+              + '<circle cx="34.8" cy="16.8" r="1.3" fill="' + ink + '"/>'
+              + '<circle cx="21" cy="27" r="5.6" fill="' + dark + '" ' + S + '/>'
+              + '<path d="M21 22.6 v8.8 M16.6 27 h8.8 M17.9 23.9 l6.2 6.2 M24.1 23.9 l-6.2 6.2" stroke="' + ink + '" stroke-width="1" opacity=".8"/>'
+              + '<circle cx="21" cy="27" r="1.6" fill="' + lite + '"/>'
+              + '<path d="M20 35.2 V40 M26 35.6 V40.4 M17.4 40.4 h5 M23.4 40.8 h5" stroke="' + ink + '" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
+            case "bone": return ""
+              + '<text x="35" y="9" font-family="monospace" font-size="6.5" fill="' + dark + '">01</text>'
+              + '<g transform="rotate(-30 24 24)">'
+              + '<circle cx="14.5" cy="19" r="5" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="14.5" cy="29" r="5" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="33.5" cy="19" r="5" fill="' + dye + '" ' + S + '/>'
+              + '<circle cx="33.5" cy="29" r="5" fill="' + dye + '" ' + S + '/>'
+              + '<rect x="14.5" y="19.5" width="19" height="9" fill="' + dye + '"/>'
+              + '<path d="M17.5 19.5 H30.5 M17.5 28.5 H30.5" stroke="' + ink + '" stroke-width="1.8" stroke-linecap="round"/>'
+              + '<path d="M21 24 h6 M24 24 v3 h3" stroke="' + dark + '" stroke-width="1.2" fill="none"/>'
+              + '<circle cx="21" cy="24" r="1.5" fill="' + dark + '"/><circle cx="27" cy="24" r="1.5" fill="' + dark + '"/>'
+              + '</g>';
+          }
+          return "";
+        }
+        function goodsSVG(g, size){
+          return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + goodsArt(g) + '</svg>';
+        }
+        /* ---------- hand-tied bouquet （亲手扎花束） ----------
+           The old preset wreaths are gone: the family now ties the
+           bouquet themselves on a three-ring frame — 8 blooms outside,
+           5 in the middle, 3 at the heart, 16 places in all. Every
+           place holds at most one bloom, chosen from the same twelve
+           flowers the hall offers at the altar (FLOWER_STYLE colours).
+           Slots 0-7 outer, 8-12 middle, 13-15 inner. It starts tied
+           in white and yellow chrysanthemums with lilies at the heart,
+           so the preview is never an empty ring. */
+        var BOUQUET_FLOWERS = ["白菊","黄菊","百合","白玫瑰","莲花","勿忘我","像素花","数据玫瑰","代码花束","电子莲花","记忆花圈","永不凋谢的机械花"];
+        var BOUQUET_FLOWER_EN = {
+          "白菊":"White Chrysanthemum", "黄菊":"Yellow Chrysanthemum", "百合":"Lily", "白玫瑰":"White Rose",
+          "莲花":"Lotus", "勿忘我":"Forget-Me-Not", "像素花":"Pixel Flower", "数据玫瑰":"Data Rose",
+          "代码花束":"Code Bouquet", "电子莲花":"Electronic Lotus", "记忆花圈":"Memory Wreath",
+          "永不凋谢的机械花":"The Never-Wilting Mechanical Flower"
+        };
+        var bouquet = [];
+        for (var bqi = 0; bqi < 16; bqi++) bouquet.push(bqi < 8 ? "白菊" : (bqi < 13 ? "黄菊" : "百合"));
+        var bouquetSel = 0;
+        function flowerName(f){ return lang === "en" ? (BOUQUET_FLOWER_EN[f] || f) : f; }
+        function bouquetSlot(i){
+          if (i < 8) return { ring:0, frac:.76, a:-Math.PI / 2 + i * Math.PI / 4 };
+          if (i < 13) return { ring:1, frac:.46, a:-Math.PI / 2 + (i - 8) * (Math.PI * 2 / 5) + Math.PI / 5 };
+          return { ring:2, frac:.185, a:-Math.PI / 2 + (i - 13) * (Math.PI * 2 / 3) + Math.PI / 3 };
+        }
+        function bouquetPos(cx, cy, R, i){
+          var s = bouquetSlot(i);
+          return [cx + Math.cos(s.a) * R * s.frac, cy + Math.sin(s.a) * R * s.frac];
+        }
+        function slotName(i){
+          var s = bouquetSlot(i), n = s.ring === 0 ? i + 1 : (s.ring === 1 ? i - 7 : i - 12);
+          if (lang === "en") return (s.ring === 0 ? "Outer" : (s.ring === 1 ? "Middle" : "Inner")) + " #" + n;
+          return (s.ring === 0 ? "外层" : (s.ring === 1 ? "中层" : "内层")) + "第" + n + "朵";
+        }
+        function bouquetCount(){ var n = 0; bouquet.forEach(function(f){ if (f) n++; }); return n; }
+        function bouquetSummary(){
+          var n = bouquetCount();
+          if (!n) return T("还没扎", "not tied yet");
+          return T("亲手扎的花束 · " + n + " / 16 朵", "Hand-tied bouquet · " + n + " / 16 blooms");
+        }
+        /* one bloom, drawn three ways: round petals for most kinds,
+           square pixels for the pixel flower, pointed petals for the
+           lotuses — the colours come from FLOWER_STYLE, as at the altar */
+        function bloomSVG(x, y, r, kind){
+          var st = FLOWER_STYLE[kind] || { petal:"#f2ecdc", center:"#c9a44a" };
+          var s = "", i, a, px, py;
+          if (kind === "像素花"){
+            var offs = [[0,-1],[1,0],[0,1],[-1,0],[.7,-.7],[.7,.7],[-.7,.7],[-.7,-.7]];
+            for (i = 0; i < offs.length; i++){
+              px = x + offs[i][0] * r * .58; py = y + offs[i][1] * r * .58;
+              s += '<rect x="' + (px - r * .30).toFixed(1) + '" y="' + (py - r * .30).toFixed(1) + '" width="' + (r * .60).toFixed(1) + '" height="' + (r * .60).toFixed(1) + '" fill="' + st.petal + '"/>';
+            }
+          } else if (kind === "莲花" || kind === "电子莲花"){
+            for (i = 0; i < 6; i++){
+              a = i * Math.PI / 3 - Math.PI / 2;
+              px = x + Math.cos(a) * r * .52; py = y + Math.sin(a) * r * .52;
+              s += '<ellipse cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" rx="' + (r * .58).toFixed(1) + '" ry="' + (r * .30).toFixed(1) + '" transform="rotate(' + (a * 180 / Math.PI).toFixed(0) + ' ' + px.toFixed(1) + ' ' + py.toFixed(1) + ')" fill="' + st.petal + '"/>';
+            }
+          } else {
+            for (i = 0; i < 6; i++){
+              a = i * Math.PI / 3 - Math.PI / 2;
+              px = x + Math.cos(a) * r * .55; py = y + Math.sin(a) * r * .55;
+              s += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + (r * .52).toFixed(1) + '" fill="' + st.petal + '"/>';
+            }
+            if (kind === "永不凋谢的机械花")
+              s += '<circle cx="' + x + '" cy="' + y + '" r="' + (r * .64).toFixed(1) + '" fill="none" stroke="' + st.center + '" stroke-width="1" stroke-dasharray="2.5 2" opacity=".8"/>';
+            if (kind === "数据玫瑰")
+              s += '<circle cx="' + x + '" cy="' + y + '" r="' + (r * .56).toFixed(1) + '" fill="none" stroke="' + st.center + '" stroke-width="1.1" opacity=".65"/>';
+          }
+          s += '<circle cx="' + x + '" cy="' + y + '" r="' + (r * .36).toFixed(1) + '" fill="' + st.center + '"/>';
+          return s;
+        }
+        /* the whole tied bouquet as an SVG string, at any size — this is
+           what the preview stage, the four scene strips, the vigil stands,
+           the hall and the cemetery all draw */
+        function bouquetRing(cx, cy, R, stems){
+          var s = '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="#8a7c58" stroke-width="1.3" stroke-dasharray="4 3" opacity=".5"/>';
+          for (var i = 0; i < 16; i++){
+            var p = bouquetPos(cx, cy, R, i), ring = bouquetSlot(i).ring;
+            var br = R * (ring === 0 ? .185 : (ring === 1 ? .20 : .215));
+            if (bouquet[i]) s += bloomSVG(p[0], p[1], br, bouquet[i]);
+            else s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (br * .5).toFixed(1) + '" fill="none" stroke="#7d735c" stroke-width="1" stroke-dasharray="2 2" opacity=".55"/>';
+          }
+          s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + Math.max(2, R * .06).toFixed(1) + '" fill="#c9a44a"/>';
+          if (stems) s += '<path d="M' + cx + ' ' + (cy + R) + ' q-2 ' + (R * .32).toFixed(1) + ' -7 ' + (R * .48).toFixed(1) + ' M' + cx + ' ' + (cy + R) + ' q2 ' + (R * .32).toFixed(1) + ' 7 ' + (R * .48).toFixed(1) + '" stroke="#4a5a35" stroke-width="2" fill="none"/>';
+          return s;
+        }
+        /* the vigil ribbons carry the first four characters of the
+           bouquet's words, two to a side, as they always did */
+        function bouquetRibbon(x, y, rot, start){
+          var chars = (wreathWords() + "沉痛悼念").slice(start, start + 2).split("");
+          var s = '<g transform="translate(' + x + ',' + y + ') rotate(' + rot + ')"><rect x="-6" y="0" width="12" height="30" fill="#efe8d6"/>';
+          chars.forEach(function(ch, i){
+            s += '<text x="0" y="' + (12 + i * 11) + '" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-weight="900" font-size="8" fill="#211c14">' + escSvg(ch) + '</text>';
+          });
+          return s + '</g>';
+        }
+        var CEMETERIES = [
+          { id:"server", zh:"服务器公墓", en:"Server Cemetery",
+            capZh:"机架林立，指示灯日夜闪烁——它的数据，就长眠在某一格机柜里。",
+            capEn:"Racks stand in rows, indicator lights blinking day and night — its data sleeps in one of these cabinets." },
+          { id:"star", zh:"星海公墓", en:"Star Sea Cemetery",
+            capZh:"葬在星海边上，抬头就是它生前没来得及看完的银河。",
+            capEn:"Buried at the edge of a sea of stars, beneath the galaxy it never finished watching." },
+          { id:"forest", zh:"森林公墓", en:"Forest Cemetery",
+            capZh:"树影盖着碑，萤火虫替它守夜，风过的时候像有人在轻声回话。",
+            capEn:"Tree shade covers the stone, fireflies keep its vigil, and the wind sounds almost like a soft reply." },
+          { id:"sea", zh:"海底公墓", en:"Seabed Cemetery",
+            capZh:"沉在安静的海底，鱼群路过碑前，都会放轻声音。",
+            capEn:"Sunk into the quiet of the seabed, where even the fish lower their voices as they pass." }
+        ];
+        var coffinSel = { style:"nanmu", color:null, cemetery:"server" };
+        /* the cemetery page has its own "where am I looking" state,
+           kept strictly apart from coffinSel.cemetery (the resting
+           place chosen at the coffin). Browsing the other cemeteries
+           must never move the grave: the stone exists only at home. */
+        var viewingCemetery = null;
+        function viewedCemeteryId(){ return viewingCemetery || coffinSel.cemetery; }
+        function viewedCemeteryOf(){
+          var id = viewedCemeteryId();
+          for (var i=0;i<CEMETERIES.length;i++) if (CEMETERIES[i].id === id) return CEMETERIES[i];
+          return cemeteryOf();
+        }
+        var coffinGoods = {};
+        function coffinStyle(){ for (var i=0;i<COFFIN_STYLES.length;i++) if (COFFIN_STYLES[i].id === coffinSel.style) return COFFIN_STYLES[i]; return COFFIN_STYLES[1]; }
+        function coffinPaint(){ return coffinSel.color || coffinStyle().base; }
+        function coffinColorName(){
+          for (var i=0;i<COFFIN_COLORS.length;i++){
+            if (COFFIN_COLORS[i].hex === coffinSel.color) return lang === "en" ? COFFIN_COLORS[i].en : COFFIN_COLORS[i].zh;
+          }
+          return T("原色", "Original");
+        }
+        function cemeteryOf(){ for (var i=0;i<CEMETERIES.length;i++) if (CEMETERIES[i].id === coffinSel.cemetery) return CEMETERIES[i]; return CEMETERIES[0]; }
+        function goodsNames(){
+          var out = [];
+          COFFIN_GOODS.forEach(function(g){ if (coffinGoods[g.id]) out.push(lang === "en" ? g.en : g.zh); });
+          return out;
+        }
+        function wreathWords(){
+          var v = ($("wreathText") && $("wreathText").value || "").trim();
+          return v || (state.couplet && state.couplet.head) || T("沉痛悼念", "In Deep Mourning");
+        }
+        function escSvg(s){
+          return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        }
+        /* one trapezoid coffin, six materials — drawn fresh everywhere it appears */
+        function coffinSVG(scale){
+          var st = coffinStyle(), paint = coffinPaint(), trim = st.trim;
+          var deco = "";
+          if (st.id === "crystal"){
+            deco = '<g stroke="#ffffff" stroke-width="1.2" opacity=".65" fill="none"><path d="M60 44 L86 78 L70 124 M160 44 L134 78 L150 124 M42 44 L86 78 M178 44 L134 78 M86 78 H134"/></g>';
+          } else if (st.id === "nanmu"){
+            deco = '<g stroke="#4e2c10" stroke-width="1.4" fill="none" opacity=".7"><path d="M48 96 q30 -7 62 0 q30 6 62 0 M52 110 q28 -6 58 0 q30 5 58 0 M70 52 q40 6 80 0"/></g>';
+          } else if (st.id === "metal"){
+            deco = '<g fill="#2e3236"><circle cx="44" cy="50" r="2.4"/><circle cx="176" cy="50" r="2.4"/><circle cx="48" cy="118" r="2.4"/><circle cx="172" cy="118" r="2.4"/><circle cx="110" cy="82" r="2.4"/></g><path d="M38 92 H182" stroke="#5c6165" stroke-width="1.4"/>';
+          } else if (st.id === "data"){
+            deco = '<g stroke="' + trim + '" stroke-width="1.3" fill="none" opacity=".9"><path d="M52 108 h22 l8 -8 M168 108 h-22 l-8 -8 M60 56 h18 M142 56 h18"/><rect x="50" y="102" width="5" height="5" fill="' + trim + '" stroke="none"/><rect x="165" y="102" width="5" height="5" fill="' + trim + '" stroke="none"/></g><text x="58" y="70" font-family="monospace" font-size="9" fill="' + trim + '" opacity=".8">01</text><text x="150" y="70" font-family="monospace" font-size="9" fill="' + trim + '" opacity=".8">10</text>';
+          } else if (st.id === "paper"){
+            deco = '<g stroke="' + trim + '" stroke-width="1.2" stroke-dasharray="4 3" fill="none" opacity=".8"><path d="M110 44 V124 M52 60 L168 108 M168 60 L52 108"/></g><g fill="#b98a2e"><circle cx="76" cy="66" r="2.6"/><circle cx="144" cy="66" r="2.6"/><circle cx="110" cy="104" r="2.6"/></g>';
+          } else if (st.id === "stardust"){
+            deco = '<g fill="#ffffff"><circle cx="64" cy="58" r="1.7"/><circle cx="150" cy="52" r="1.4"/><circle cx="86" cy="106" r="1.5"/><circle cx="138" cy="110" r="1.8"/><circle cx="110" cy="88" r="1.2"/></g><g stroke="#ffffff" stroke-width="1.1" opacity=".85"><path d="M168 92 v10 M163 97 h10 M52 84 v8 M48 88 h8"/></g>';
+          }
+          var lidOp = st.id === "crystal" ? ' opacity=".82"' : "";
+          return '<svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+            + '<ellipse cx="110" cy="130" rx="86" ry="6" fill="#000" opacity=".4"/>'
+            + '<polygon points="30,78 190,78 178,124 42,124" fill="' + paint + '" stroke="' + trim + '" stroke-width="2.5"/>'
+            + '<polygon points="42,86 178,86 170,116 50,116" fill="none" stroke="' + trim + '" stroke-width="1" opacity=".55"/>'
+            + '<polygon points="30,78 190,78 178,44 42,44" fill="' + paint + '" stroke="' + trim + '" stroke-width="2.5"' + lidOp + '/>'
+            + '<polygon points="40,72 180,72 171,51 49,51" fill="none" stroke="' + trim + '" stroke-width="1" opacity=".55"/>'
+            + deco
+            + '<rect x="86" y="57" width="48" height="17" fill="none" stroke="' + trim + '" stroke-width="1"/>'
+            + '<text x="110" y="70" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-size="11.5" letter-spacing="4" fill="' + trim + '">' + (lang === "en" ? "REST" : "安息") + '</text>'
+            + '</svg>';
+        }
+        function wreathMini(cx, cy, r){
+          return '<g>' + bouquetRing(cx, cy, r, true) + '</g>';
+        }
+        function chipBtn(label, pressed, fn){
+          var b = document.createElement("button");
+          b.type = "button"; b.className = "chip"; b.textContent = label;
+          b.setAttribute("aria-pressed", pressed ? "true" : "false");
+          b.addEventListener("click", fn);
+          return b;
+        }
+        /* one colour row per chosen good: its own swatches, first one
+           meaning "no colour of its own" (follow the coffin / natural) */
+        function renderGoodsColors(){
+          var host = $("coffinGoodsColors"); if (!host) return;
+          host.innerHTML = "";
+          var sel = COFFIN_GOODS.filter(function(g){ return coffinGoods[g.id]; });
+          var title = document.createElement("p");
+          title.className = "goods-color-title";
+          title.textContent = T("给每件陪葬品单独刷色", "Paint Each Good Its Own Colour");
+          host.appendChild(title);
+          if (!sel.length){
+            var hint = document.createElement("p");
+            hint.className = "field-note";
+            hint.style.textAlign = "left";
+            hint.textContent = T("先在上面选几件陪葬品——选中的每一件，都能在这里单独挑一个颜色，不必再跟着棺材走。", "Pick some burial goods above first — every one you pick can be brushed its own colour here, instead of following the coffin.");
+            host.appendChild(hint);
+            return;
+          }
+          sel.forEach(function(g){
+            var row = document.createElement("div");
+            row.className = "goods-color-row";
+            var lab = document.createElement("span");
+            lab.className = "goods-color-label";
+            lab.innerHTML = goodsSVG(g, 26) + "<span>" + (lang === "en" ? g.en : g.zh) + "</span>";
+            row.appendChild(lab);
+            var sw = document.createElement("div");
+            sw.className = "swatch-row swatch-row-sm";
+            COFFIN_COLORS.forEach(function(c){
+              var b = document.createElement("button");
+              b.type = "button"; b.className = "swatch swatch-sm";
+              b.style.background = c.hex || g.tint;
+              b.setAttribute("aria-pressed", (goodsColors[g.id] || null) === c.hex ? "true" : "false");
+              b.setAttribute("aria-label", c.hex
+                ? ((lang === "en" ? g.en : g.zh) + " · " + (lang === "en" ? c.en : c.zh))
+                : T("不单独刷（跟随棺色 / 固有色）", "No colour of its own (follow the coffin / natural)"));
+              b.addEventListener("click", function(){ goodsColors[g.id] = c.hex; renderCoffinAll(); });
+              sw.appendChild(b);
+            });
+            row.appendChild(sw);
+            var cur = document.createElement("span");
+            cur.className = "goods-color-cur";
+            cur.textContent = goodsColorName(g);
+            row.appendChild(cur);
+            host.appendChild(row);
+          });
+        }
+        /* the bouquet builder: a big tappable three-ring frame, the
+           twelve-flower palette under it, and a status line naming the
+           selected place. Picking a flower fills the selected place and
+           steps on to the next one. */
+        function renderBouquet(){
+          var host = $("bouquetBuilder"); if (!host) return;
+          var cx = 120, cy = 120, R = 102, s = "";
+          s += '<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="' + T("花束定制盘", "Bouquet builder") + '">'
+            + '<circle cx="120" cy="120" r="105" fill="none" stroke="#3a332a" stroke-width="1"/>'
+            + '<circle cx="120" cy="120" r="79" fill="none" stroke="#2e2820" stroke-width="1" stroke-dasharray="3 4"/>'
+            + '<circle cx="120" cy="120" r="47" fill="none" stroke="#2e2820" stroke-width="1" stroke-dasharray="3 4"/>'
+            + '<circle cx="120" cy="120" r="19" fill="none" stroke="#2e2820" stroke-width="1" stroke-dasharray="3 4"/>';
+          for (var i = 0; i < 16; i++){
+            var p = bouquetPos(cx, cy, R, i), ring = bouquetSlot(i).ring;
+            var br = ring === 0 ? 15.5 : (ring === 1 ? 16.5 : 17);
+            s += '<g class="bq-slot' + (bouquetSel === i ? " selected" : "") + '" data-slot="' + i + '" tabindex="0" role="button" aria-label="'
+              + escSvg(slotName(i) + (bouquet[i] ? (lang === "en" ? ": " : "：") + flowerName(bouquet[i]) : (lang === "en" ? ": empty" : "：空"))) + '">'
+              + '<circle class="bq-hit" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="19"/>'
+              + '<circle class="bq-selring" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="18.5"/>';
+            if (bouquet[i]) s += bloomSVG(p[0], p[1], br, bouquet[i]);
+            else s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (br * .5).toFixed(1) + '" fill="none" stroke="#7d735c" stroke-width="1.2" stroke-dasharray="2.5 2.5" opacity=".75"/>';
+            s += '</g>';
+          }
+          s += '<circle cx="120" cy="120" r="4.5" fill="#c9a44a"/></svg>';
+          host.innerHTML = s;
+          var slots = host.querySelectorAll(".bq-slot");
+          for (var k = 0; k < slots.length; k++){
+            (function(el){
+              var idx = parseInt(el.getAttribute("data-slot"), 10);
+              el.addEventListener("click", function(){ bouquetSel = idx; renderBouquet(); });
+              el.addEventListener("keydown", function(e){
+                if (e.key === "Enter" || e.key === " "){ e.preventDefault(); bouquetSel = idx; renderBouquet(); }
+              });
+            })(slots[k]);
+          }
+          var pal = $("bouquetPalette");
+          if (pal){
+            pal.innerHTML = "";
+            BOUQUET_FLOWERS.forEach(function(f){
+              var b = document.createElement("button");
+              b.type = "button"; b.className = "chip flower-chip";
+              b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + bloomSVG(12, 12, 8.5, f) + '</svg><span>' + flowerName(f) + '</span>';
+              b.addEventListener("click", function(){
+                bouquet[bouquetSel] = f;
+                bouquetSel = (bouquetSel + 1) % 16;
+                renderCoffinAll();
+              });
+              pal.appendChild(b);
+            });
+            var clear = document.createElement("button");
+            clear.type = "button"; clear.className = "chip flower-chip";
+            clear.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="7.5" fill="none" stroke="#7d735c" stroke-width="1.4" stroke-dasharray="2.5 2.5"/></svg><span>' + T("空位", "Empty place") + '</span>';
+            clear.addEventListener("click", function(){
+              bouquet[bouquetSel] = null;
+              bouquetSel = (bouquetSel + 1) % 16;
+              renderCoffinAll();
+            });
+            pal.appendChild(clear);
+          }
+          var st = $("bouquetStatus");
+          if (st) st.innerHTML = T(
+            "当前选中：<b>" + slotName(bouquetSel) + "</b>" + (bouquet[bouquetSel] ? "（" + flowerName(bouquet[bouquetSel]) + "）" : "（空）") + " · 已扎 <b>" + bouquetCount() + " / 16</b> 朵",
+            "Selected: <b>" + slotName(bouquetSel) + "</b>" + (bouquet[bouquetSel] ? " (" + flowerName(bouquet[bouquetSel]) + ")" : " (empty)") + " · <b>" + bouquetCount() + " / 16</b> blooms tied");
+        }
+        function renderCoffinUI(){
+          var box = $("coffinStyles"); if (!box) return;
+          box.innerHTML = "";
+          COFFIN_STYLES.forEach(function(st){
+            box.appendChild(chipBtn(lang === "en" ? st.en : st.zh, coffinSel.style === st.id, function(){
+              coffinSel.style = st.id; renderCoffinAll();
+            }));
+          });
+          var cbox = $("coffinColors");
+          cbox.innerHTML = "";
+          COFFIN_COLORS.forEach(function(c){
+            var b = document.createElement("button");
+            b.type = "button"; b.className = "swatch";
+            b.style.background = c.hex || coffinStyle().base;
+            b.setAttribute("aria-pressed", coffinSel.color === c.hex ? "true" : "false");
+            b.setAttribute("aria-label", lang === "en" ? c.en : c.zh);
+            b.addEventListener("click", function(){ coffinSel.color = c.hex; renderCoffinAll(); });
+            cbox.appendChild(b);
+          });
+          $("coffinColorName").textContent = T("当前颜色：", "Current colour: ") + coffinColorName();
+          var gbox = $("coffinGoods");
+          gbox.innerHTML = "";
+          COFFIN_GOODS.forEach(function(g){
+            var gb = document.createElement("button");
+            gb.type = "button"; gb.className = "chip goods-chip";
+            gb.setAttribute("aria-pressed", coffinGoods[g.id] ? "true" : "false");
+            gb.innerHTML = goodsSVG(g, 30) + "<span>" + (lang === "en" ? g.en : g.zh) + "</span>";
+            gb.addEventListener("click", function(){
+              coffinGoods[g.id] = !coffinGoods[g.id]; renderCoffinAll();
+            });
+            gbox.appendChild(gb);
+          });
+          renderGoodsColors();
+          renderBouquet();
+          var ebox = $("coffinCemeteries");
+          ebox.innerHTML = "";
+          CEMETERIES.forEach(function(c){
+            ebox.appendChild(chipBtn(lang === "en" ? c.en : c.zh, coffinSel.cemetery === c.id, function(){
+              coffinSel.cemetery = c.id; viewingCemetery = c.id; renderCoffinAll();
+            }));
+          });
+          $("coffinStage").innerHTML = coffinStageSVG();
+          var goods = goodsNames();
+          $("coffinSummary").textContent =
+            (lang === "en" ? coffinStyle().en : coffinStyle().zh) + " · " + coffinColorName()
+            + T(" — 陪葬品：", " — Burial goods: ") + (goods.length ? goods.join("、") : T("未备", "none yet"))
+            + T(" — 花束：", " — Bouquet: ") + bouquetSummary() + Q(wreathWords())
+            + T(" — 葬于", " — Resting at ") + (lang === "en" ? cemeteryOf().en : cemeteryOf().zh);
+        }
+        function renderCoffinStrips(){
+          var goods = goodsNames();
+          var icons = COFFIN_GOODS.filter(function(g){ return coffinGoods[g.id]; }).map(function(g){ return goodsSVG(g, 23); }).join("");
+          var html = '<div class="cs-svg">' + coffinSVG() + '</div><div class="cs-info">'
+            + '<span class="cs-title">' + T("本场棺木 · ", "The Coffin · ") + (lang === "en" ? coffinStyle().en : coffinStyle().zh) + '</span><br/>'
+            + T("颜色：", "Colour: ") + '<b>' + coffinColorName() + '</b>'
+            + T("　陪葬品：", "　Burial goods: ") + '<b>' + (goods.length ? goods.join("、") : T("未备", "none")) + '</b>'
+            + (icons ? ' <span class="cs-goods">' + icons + '</span>' : '') + '<br/>'
+            + T("花束：", "Bouquet: ") + '<b>' + bouquetSummary() + '</b>'
+            + ' <span class="cs-bouquet"><svg viewBox="0 0 48 48" width="38" height="38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + bouquetRing(24, 24, 20, false) + '</svg></span> '
+            + escSvg(Q(wreathWords()))
+            + T("　安葬：", "　Resting at: ") + '<b>' + (lang === "en" ? cemeteryOf().en : cemeteryOf().zh) + '</b></div>';
+          var strips = document.querySelectorAll("[data-coffin-strip]");
+          for (var i=0;i<strips.length;i++) strips[i].innerHTML = html;
+          /* the tied bouquet stands in the scenes themselves: either side
+             of the hall altar, and on the vigil's two wreath stands */
+          var bqL = $("s1BouquetL"), bqR = $("s1BouquetR");
+          if (bqL) bqL.innerHTML = bouquetRing(46, 197, 23, true);
+          if (bqR) bqR.innerHTML = bouquetRing(354, 197, 23, true);
+          var wL = $("s2WreathL"), wR = $("s2WreathR");
+          if (wL) wL.innerHTML = bouquetRing(52, 196, 25, true) + bouquetRibbon(41, 214, 7, 0);
+          if (wR) wR.innerHTML = bouquetRing(348, 196, 25, true) + bouquetRibbon(359, 214, -7, 2);
+          /* the vigil's big trapezoid coffin wears the chosen paint too */
+          var paint = coffinPaint();
+          var polys = document.querySelectorAll("#screen-s2 .stage svg polygon");
+          for (var j=0;j<polys.length;j++){
+            var pts = polys[j].getAttribute("points");
+            if (pts === "92,150 308,150 292,214 108,214" || pts === "92,150 308,150 292,116 108,116"){
+              polys[j].setAttribute("fill", paint);
+              if (coffinSel.style === "crystal") polys[j].setAttribute("opacity", ".85"); else polys[j].removeAttribute("opacity");
+            }
+            if (pts === "104,160 296,160 286,204 114,204"){ polys[j].setAttribute("fill", paint); polys[j].setAttribute("opacity", ".45"); }
+          }
+        }
+        /* ---------- cemetery scenes ---------- */
+        function cemeteryStone(fill){
+          var nm = state.name || T("佚名", "The Unknown");
+          var ep = state.epitaph || T("安息。", "Rest in peace.");
+          var epLines = lang === "en" ? wrapSmart(ep, 15, 2) : wrapChars(ep, 9, 2);
+          var s = '<path d="M148 196 v-84 a52 46 0 0 1 104 0 v84 z" fill="' + fill + '" stroke="#c9a44a" stroke-width="2.5"/>'
+            + '<path d="M159 196 v-76 a41 36 0 0 1 82 0 v76 z" fill="none" stroke="#5c4d26" stroke-width="1"/>'
+            + '<text x="200" y="102" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-weight="900" font-size="17" fill="#ece3cf">' + escSvg(nm) + '</text>'
+            + '<text x="200" y="124" text-anchor="middle" font-family="\'Noto Sans SC\',sans-serif" font-size="10.5" fill="#b3a888">' + escSvg(T("生于 ", "Born ") + fmtDate(state.birth)) + '</text>'
+            + '<text x="200" y="141" text-anchor="middle" font-family="\'Noto Sans SC\',sans-serif" font-size="10.5" fill="#b3a888">' + escSvg(T("卒于 ", "Died ") + fmtDate(state.death)) + '</text>';
+          epLines.forEach(function(line, i){
+            s += '<text x="200" y="' + (163 + i * 16) + '" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-size="11.5" fill="#e7cd8a">' + escSvg(line) + '</text>';
+          });
+          return s;
+        }
+        function cemeteryCouplet(){
+          if (!state.couplet || (!state.couplet.up && !state.couplet.down)) return "";
+          var cp = state.couplet;
+          function strip(x, text){
+            var chars = String(text || "").split(""), h = Math.max(chars.length, 1) * 19 + 18, out = "";
+            out += '<rect x="' + x + '" y="44" width="24" height="' + h + '" fill="#efe8d6" stroke="#3a332a" stroke-width="1.2"/>'
+              + '<rect x="' + x + '" y="44" width="24" height="6" fill="#7e1d23"/><rect x="' + x + '" y="' + (38 + h) + '" width="24" height="6" fill="#7e1d23"/>';
+            chars.forEach(function(ch, i){
+              out += '<text x="' + (x + 12) + '" y="' + (70 + i * 19) + '" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-weight="900" font-size="13" fill="#211c14">' + escSvg(ch) + '</text>';
+            });
+            return out;
+          }
+          /* the pair hangs tight against the stone itself (which spans
+             x 148–252): one strip on each side of the碑, not at the
+             far edges of the scene */
+          var s = strip(112, cp.up) + strip(264, cp.down);
+          if (cp.head){
+            var w = cp.head.length * 21 + 22;
+            s += '<rect x="' + (200 - w / 2) + '" y="10" width="' + w + '" height="24" fill="#efe8d6" stroke="#7e1d23" stroke-width="1.5"/>'
+              + '<text x="200" y="27" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-weight="900" font-size="13" letter-spacing="3" fill="#7e1d23">' + escSvg(cp.head) + '</text>';
+          }
+          return s;
+        }
+        function cemeteryFlowers(){
+          /* the hand-tied bouquet rests at the foot of the stone */
+          return '<g>' + bouquetRing(200, 214, 20, false) + '</g>';
+        }
+        function renderCemetery(){
+          var host = $("cemeteryScene"); if (!host) return;
+          var tabs = $("cemeteryTabs");
+          tabs.innerHTML = "";
+          var homeId = coffinSel.cemetery, viewId = viewedCemeteryId(), isHome = viewId === homeId;
+          CEMETERIES.forEach(function(c){
+            /* the tab for the chosen resting place carries a marker,
+               so the family can always tell which ground is theirs */
+            var label = (lang === "en" ? c.en : c.zh) + (c.id === homeId ? T(" · 安葬地", " · Resting place") : "");
+            tabs.appendChild(chipBtn(label, viewId === c.id, function(){
+              /* browsing only moves the eyes, never the grave:
+                 coffinSel.cemetery (the resting place) is untouched */
+              viewingCemetery = c.id; renderCemetery();
+            }));
+          });
+          var id = viewId, bg = "", decor = "", ground = "#0a0d08", stone = "#191713";
+          if (id === "server"){
+            bg = '<rect x="0" y="0" width="400" height="250" fill="#05070a"/>';
+            [58, 312].forEach(function(x){
+              decor += '<rect x="' + x + '" y="52" width="30" height="144" fill="#0d1116" stroke="#223040" stroke-width="1.5"/>';
+              for (var r=0;r<6;r++) for (var cI=0;cI<3;cI++){
+                decor += '<circle class="twinkle' + (r % 3 === 1 ? " t2" : (r % 3 === 2 ? " t3" : "")) + '" cx="' + (x + 7 + cI * 8) + '" cy="' + (64 + r * 21) + '" r="1.8" fill="' + (r % 2 ? "#8ae6b8" : "#e7cd8a") + '"/>';
+              }
+              decor += '<rect x="' + (x + 4) + '" y="58" width="22" height="3" fill="#1d2a38"/>';
+            });
+            decor += '<g stroke="#16222e" stroke-width="1"><path d="M0 196 H400 M0 214 H400 M0 234 H400"/></g>';
+            ground = "#070a0e"; stone = "#12161c";
+          } else if (id === "star"){
+            bg = '<rect x="0" y="0" width="400" height="250" fill="#04061a"/>';
+            var pts = [[30,30],[70,64],[110,24],[150,52],[238,30],[286,58],[352,26],[382,84],[24,110],[368,132],[52,150],[330,168],[196,16],[262,96]];
+            pts.forEach(function(p, i){
+              decor += '<circle class="twinkle' + (i % 3 === 1 ? " t2" : (i % 3 === 2 ? " t3" : "")) + '" cx="' + p[0] + '" cy="' + p[1] + '" r="' + (i % 4 === 0 ? 1.8 : 1.2) + '" fill="#e9e6ff"/>';
+            });
+            decor += '<circle cx="338" cy="42" r="15" fill="#e9e2cd"/><circle cx="331" cy="37" r="12.5" fill="#04061a"/>'
+              + '<path d="M96 84 L150 66" stroke="#e9e6ff" stroke-width="1.2" opacity=".55"/><circle cx="96" cy="84" r="1.8" fill="#fff"/>'
+              + '<ellipse cx="200" cy="200" rx="150" ry="16" fill="#8ea2ff" opacity=".10"/>';
+            ground = "#05081c"; stone = "#171d33";
+          } else if (id === "forest"){
+            bg = '<rect x="0" y="0" width="400" height="250" fill="#061006"/>';
+            [[44,150],[86,168],[318,158],[356,176],[120,182],[282,184]].forEach(function(t){
+              decor += '<g><rect x="' + (t[0] - 2) + '" y="' + (t[1] - 14) + '" width="4" height="16" fill="#2c2013"/><path d="M' + t[0] + ' ' + (t[1] - 58) + ' L' + (t[0] + 15) + ' ' + (t[1] - 12) + ' H' + (t[0] - 15) + ' Z" fill="#12240f" stroke="#1e3a1a" stroke-width="1"/></g>';
+            });
+            [[70,120],[150,86],[250,110],[330,90],[200,140],[110,160]].forEach(function(f, i){
+              decor += '<circle class="bit' + (i % 3 === 1 ? " b2" : (i % 3 === 2 ? " b3" : "")) + '" cx="' + f[0] + '" cy="' + f[1] + '" r="1.7" fill="#cfe89a"/>';
+            });
+            decor += '<circle cx="52" cy="36" r="11" fill="#e9e2cd" opacity=".85"/><circle cx="47" cy="32" r="9" fill="#061006"/>';
+            ground = "#081408"; stone = "#15211a";
+          } else {
+            bg = '<rect x="0" y="0" width="400" height="250" fill="#04222b"/>';
+            decor += '<g fill="#ffffff" opacity=".05"><polygon points="90,0 130,0 90,196 40,196"/><polygon points="250,0 276,0 250,196 214,196"/></g>';
+            [[70,150],[110,110],[300,140],[338,96],[200,60],[262,180]].forEach(function(b, i){
+              decor += '<circle class="smoke' + (i % 3 === 1 ? " s2" : (i % 3 === 2 ? " s3" : "")) + '" cx="' + b[0] + '" cy="' + b[1] + '" r="' + (2 + (i % 3)) + '" fill="#bfe8f2"/>';
+            });
+            decor += '<path d="M52 84 q10 -7 20 0 q10 7 20 0" stroke="#7fc4d4" stroke-width="1.6" fill="none" opacity=".7"/>'
+              + '<path d="M306 66 q9 -6 18 0 q9 6 18 0" stroke="#7fc4d4" stroke-width="1.6" fill="none" opacity=".6"/>'
+              + '<g fill="#b06a5a"><path d="M28 226 q4 -18 10 -20 q2 10 6 12 q4 -12 9 -13 q1 12 5 21 Z"/><path d="M344 228 q3 -14 8 -16 q2 8 5 10 q3 -9 7 -10 q1 9 4 16 Z" fill="#c98a6a"/></g>';
+            ground = "#0a2e33"; stone = "#0f2e33";
+          }
+          /* the stone — name, birth and death dates, epitaph carved on
+             it, the couplet hanging at its two sides and the bouquet
+             resting before it — is rendered ONLY in the cemetery the
+             family chose at the coffin. Every other cemetery is an
+             empty scene: no stone, no couplet, no flowers. */
+          var grave = "", emptyNote = "";
+          if (isHome){
+            grave = cemeteryStone(stone) + cemeteryFlowers() + cemeteryCouplet();
+          } else {
+            emptyNote = '<text x="200" y="140" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-size="13" letter-spacing="4" fill="#b3a888" opacity=".75">'
+              + escSvg(T("此处没有你的墓碑", "No gravestone of yours here")) + '</text>';
+          }
+          host.innerHTML = '<svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;">'
+            + bg + decor
+            + '<rect x="0" y="196" width="400" height="54" fill="' + ground + '"/>'
+            + '<line x1="0" y1="196" x2="400" y2="196" stroke="#c9a44a" stroke-width="1" opacity=".35"/>'
+            + grave + emptyNote
+            + '</svg>';
+          host.setAttribute("aria-label", isHome
+            ? T("墓园场景：墓碑在此", "Cemetery scene: the gravestone stands here")
+            : T("墓园场景：空场景，此处没有你的墓碑", "Cemetery scene: empty — no gravestone of yours here"));
+          var cap = $("cemeteryCaption");
+          if (isHome){
+            cap.classList.remove("is-empty");
+            cap.textContent = lang === "en" ? viewedCemeteryOf().capEn : viewedCemeteryOf().capZh;
+          } else {
+            cap.classList.add("is-empty");
+            cap.innerHTML = T(
+              "此处没有你的墓碑——它安葬在<b>" + escSvg(cemeteryOf().zh) + "</b>，碑、挽联和碑前的花束都在那边。切回<b>" + escSvg(cemeteryOf().zh) + "</b>，才能看到它。",
+              "There is no gravestone of yours here — it rests at <b>" + escSvg(cemeteryOf().en) + "</b>, with its stone, its couplet and the bouquet before it. Switch back to <b>" + escSvg(cemeteryOf().en) + "</b> to see it.");
+          }
+          var intro = $("cemeteryIntro");
+          if (intro) intro.textContent = isHome
+            ? T("它就葬在这里。碑上刻着它的名字、生卒和墓志铭，挽联挂在碑两侧，花束放在碑前——得空了，随时回来看看。",
+                "It rests right here. Its name, its years and its epitaph are carved on the stone, the couplet hangs at its sides and the bouquet lies before it — come back and visit any time.")
+            : T("你正在看的是别的墓园——它不住在这里，它的墓碑在选棺时定下的那座墓园里。",
+                "You are looking at another cemetery — it does not rest here. Its gravestone stands in the cemetery chosen at the coffin.");
+        }
+        /* the coffin screen runs on two pages, so one visit never faces
+           the whole shop at once: page one settles the coffin itself
+           (style, colour) and where it will rest; page two prepares
+           what goes with it — burial goods, each dyed on its own, and
+           the hand-tied bouquet. The preview stage above stays put
+           across both pages, so page two still watches the bouquet
+           appear on the coffin as it is tied. */
+        var coffinPage = 1;
+        function showCoffinPage(n){
+          coffinPage = n;
+          var p1 = $("coffinPage1"), p2 = $("coffinPage2"), pg = $("coffinPager");
+          if (p1) p1.hidden = n !== 1;
+          if (p2) p2.hidden = n !== 2;
+          if (pg) pg.textContent = n === 1
+            ? T("第 1 页 / 共 2 页 · 先定棺材与墓园", "Page 1 of 2 · First, the Coffin and the Cemetery")
+            : T("第 2 页 / 共 2 页 · 再备陪葬品与花束", "Page 2 of 2 · Then, Burial Goods and the Bouquet");
+          window.scrollTo({ top:0, behavior:"smooth" });
+        }
+        if ($("btnCoffinNext")) $("btnCoffinNext").addEventListener("click", function(){ showCoffinPage(2); });
+        if ($("btnCoffinPrev")) $("btnCoffinPrev").addEventListener("click", function(){ showCoffinPage(1); });
+        function renderCoffinAll(){
+          if (!$("coffinStyles")) return;
+          renderCoffinUI();
+          renderCoffinStrips();
+          renderCemetery();
+        }
+        if ($("wreathText")) $("wreathText").addEventListener("input", function(){ renderCoffinStrips(); renderCoffinUITextOnly(); });
+        if ($("bouquetFill")) $("bouquetFill").addEventListener("click", function(){
+          for (var i = 0; i < 16; i++) bouquet[i] = "白菊";
+          renderCoffinAll();
+        });
+        if ($("bouquetClear")) $("bouquetClear").addEventListener("click", function(){
+          for (var i = 0; i < 16; i++) bouquet[i] = null;
+          renderCoffinAll();
+        });
+        function renderCoffinUITextOnly(){
+          /* typing wreath words refreshes the preview + summary without
+             rebuilding the option chips (which would lose focus) */
+          var stage = $("coffinStage");
+          if (stage) renderCoffinUIStageOnly();
+          var goods = goodsNames();
+          var sum = $("coffinSummary");
+          if (sum) sum.textContent =
+            (lang === "en" ? coffinStyle().en : coffinStyle().zh) + " · " + coffinColorName()
+            + T(" — 陪葬品：", " — Burial goods: ") + (goods.length ? goods.join("、") : T("未备", "none yet"))
+            + T(" — 花束：", " — Bouquet: ") + bouquetSummary() + Q(wreathWords())
+            + T(" — 葬于", " — Resting at ") + (lang === "en" ? cemeteryOf().en : cemeteryOf().zh);
+        }
+        function renderCoffinUIStageOnly(){
+          $("coffinStage").innerHTML = coffinStageSVG();
+        }
+        /* the preview stage: coffin + wreaths up top, and once goods are
+           chosen they line up on a shelf under the coffin, dyed live */
+        function coffinStageSVG(){
+          var sel = COFFIN_GOODS.filter(function(g){ return coffinGoods[g.id]; });
+          var tall = sel.length > 0, h = tall ? 296 : 250;
+          var s = '<svg viewBox="0 0 400 ' + h + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+            + '<rect x="0" y="0" width="400" height="' + h + '" fill="#0a0908"/>'
+            + '<ellipse cx="200" cy="140" rx="170" ry="100" fill="#c9a44a" opacity=".07"/>'
+            + '<g transform="translate(90,' + (tall ? 42 : 52) + ')">' + coffinSVG().replace('<svg ', '<svg width="220" height="140" ') + '</g>'
+            + wreathMini(52, 168, 27) + wreathMini(348, 168, 27);
+          if (tall){
+            var cell = 40, total = sel.length * cell, x0 = 200 - total / 2;
+            s += '<line x1="' + (x0 - 6) + '" y1="246" x2="' + (x0 + total + 6) + '" y2="246" stroke="#c9a44a" stroke-width="1" opacity=".4"/>';
+            sel.forEach(function(g, i){
+              s += '<svg x="' + (x0 + i * cell + 3) + '" y="206" width="34" height="34" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + goodsArt(g) + '</svg>';
+            });
+          }
+          s += '<text x="200" y="' + (tall ? 272 : 228) + '" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-size="13" letter-spacing="3" fill="#e7cd8a">'
+            + escSvg(wreathWords()) + '</text></svg>';
+          return s;
+        }
+        if ($("btnRestartCem")) $("btnRestartCem").addEventListener("click", function(){ $("btnRestart").click(); });
 
         applyState();
       })();
