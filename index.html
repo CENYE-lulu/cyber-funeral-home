@@ -233,6 +233,7 @@
         font-weight:700;
       }
       .chip-custom-row{ display:flex; gap:8px; margin-top:10px; }
+      .chip-custom-row[hidden]{ display:none; }
       .chip-custom-row input{
         flex:1; box-sizing:border-box;
         background:#0e0c09; border:1px solid var(--panel-line); color:var(--ink);
@@ -606,12 +607,9 @@
       .glowpulse{ animation:gp 3s ease-in-out infinite alternate; }
       @keyframes gp{ from{ opacity:.45;} to{ opacity:.9;} }
       .fire{ opacity:0; transition:opacity .5s ease; }
-      .ignited .fire{ opacity:1; }
       .firepath{ transform-origin:center bottom; animation:flick .55s ease-in-out infinite alternate; }
       .furnace-door{ transition:transform 1.1s ease; transform-origin:left center; }
-      .ignited .furnace-door{ transform:translateX(-46px); }
       .coffin-group{ transition:transform 1.4s ease .3s, opacity 1.4s ease .3s; }
-      .ignited .coffin-group{ transform:translateX(58px); opacity:.25; }
       .urn-final{ opacity:0; transition:opacity .8s ease; }
       .urn-final.show{ opacity:1; }
       .char-dot{ display:inline-block; }
@@ -1018,14 +1016,6 @@
       .vstat.sanity .vstat-tier{ color:#a9bfa9; border-color:#476047; background:rgba(125,154,125,.10); }
       .vstat-tier.tier-pop{ animation:tierPop .5s cubic-bezier(.2,1.4,.4,1) both; }
       @keyframes tierPop{ 0%{ transform:scale(1);} 40%{ transform:scale(1.22);} 100%{ transform:scale(1);} }
-      .signal-pill{
-        position:absolute; left:50%; transform:translateX(-50%); bottom:14px; z-index:5;
-        background:rgba(14,12,9,.94); border:1px solid var(--gold-deep); color:var(--gold-pale);
-        font-family:var(--sans); font-size:13.5px; letter-spacing:.04em;
-        padding:9px 18px; border-radius:999px; cursor:pointer; white-space:nowrap; max-width:94%;
-        animation:signalPulse 1.7s ease-in-out infinite;
-      }
-      .signal-pill[hidden]{ display:none; }
       @keyframes signalPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(201,164,74,0);} 50%{ box-shadow:0 0 16px 3px rgba(201,164,74,.4);} }
       /* 离席：彻底黑屏，无弹幕，只有脚步离开的一句话 */
       .leave-overlay{
@@ -1106,7 +1096,7 @@
       .burnt-down{ transform-box:fill-box; transform-origin:center bottom; transform:scaleY(.55); transition:transform .9s ease; }
       .lamp-fed .halo{ opacity:1; }
       @media (prefers-reduced-motion: reduce){
-        .chip-flash,.signal-pill,.vstat-tier.tier-pop{ animation:none !important; }
+        .chip-flash,.vstat-tier.tier-pop{ animation:none !important; }
         .dream-line.show{ animation:none !important; opacity:.96; }
         .dream-overlay{ transition:none !important; }
         .candle-tilted,.burnt-down,.vstat-bar span{ transition:none !important; }
@@ -1550,22 +1540,6 @@
         padding:10px 12px; border-radius:2px; min-height:46px; margin-top:10px;
       }
       .wreath-input:focus{ outline:2px solid var(--gold-deep); border-color:var(--gold-deep); }
-      .coffin-strip{
-        margin-top:12px;
-        border:1px solid var(--panel-line); background:var(--panel);
-        padding:12px 14px;
-        display:flex; gap:14px; align-items:center;
-      }
-      .coffin-strip[hidden]{ display:none; }
-      .coffin-strip .cs-svg{ flex:none; width:118px; }
-      .coffin-strip .cs-svg svg{ display:block; width:100%; height:auto; }
-      .coffin-strip .cs-info{ min-width:0; font-size:13px; color:var(--ink-dim); line-height:1.75; }
-      .coffin-strip .cs-info b{ color:var(--gold-pale); font-weight:700; }
-      .coffin-strip .cs-title{ font-family:var(--serif); font-size:14.5px; color:var(--ink); letter-spacing:.08em; }
-      @media (max-width:560px){
-        .coffin-strip{ flex-direction:column; text-align:center; }
-        .coffin-strip .cs-svg{ width:150px; }
-      }
       .goods-chip{ display:inline-flex; align-items:center; gap:8px; padding:5px 13px 5px 7px; }
       .goods-chip svg{ width:30px; height:30px; flex:none; filter:saturate(.45) opacity(.72); transition:filter .15s ease; }
       .goods-chip[aria-pressed="true"] svg{ filter:none; }
@@ -1700,7 +1674,6 @@
         .modal-close{ min-width:44px; min-height:44px; }
         .modal-opt.sub{ min-height:46px; }
         .crem-relic-link{ min-height:44px; display:flex; align-items:center; justify-content:center; text-align:center; }
-        .signal-pill{ min-height:44px; padding:10px 18px; overflow:hidden; text-overflow:ellipsis; }
         .drag-urn{ padding:12px 18px 8px; }
 
         /* cremation */
@@ -1835,11 +1808,11 @@
             <div class="field-row">
               <div class="field">
                 <label for="f-birth">上线日期</label>
-                <input type="text" id="f-birth" inputmode="numeric" autocomplete="off" placeholder="****年**月**日" />
+                <input type="text" id="f-birth" autocomplete="off" placeholder="****年**月**日" />
               </div>
               <div class="field">
                 <label for="f-death">下线日期</label>
-                <input type="text" id="f-death" inputmode="numeric" autocomplete="off" placeholder="****年**月**日" />
+                <input type="text" id="f-death" autocomplete="off" placeholder="****年**月**日" />
               </div>
             </div>
 
@@ -3406,7 +3379,6 @@
         ];
 
         var state = Object.assign({}, BLANK);
-        var ignited = false;
 
         function $(id){ return document.getElementById(id); }
         function val(id){ return $(id).value.trim(); }
@@ -3467,7 +3439,7 @@
               burialMsg(T("墓园", "The Cemetery"), T("把骨灰盒往上拖进墓园画面，碰到画面就吸进去安放。", "Drag the urn up into the cemetery scene — it settles in the moment it touches."));
             }
           }
-          if (id === "screen-s2"){ armVigilIdle(); } else { clearVigilIdle(); hideSignalPill(); }
+          if (id === "screen-s2"){ armVigilIdle(); } else { clearVigilIdle(); }
           /* arriving at the cemetery always starts at the chosen
              resting place — the one cemetery where the stone stands */
           if (id === "screen-cemetery" && typeof coffinSel !== "undefined" && coffinSel) viewingCemetery = coffinSel.cemetery;
@@ -3938,6 +3910,7 @@
           ]}
         ];
         var activeCouplet = null;   // the single hung couplet: { up, down, head }
+        var registrationCouplet = null;
         var cpCat = 0;
 
         /* the editor lives inline on the coffin screen now: syncing
@@ -3960,10 +3933,10 @@
            progress: every rite scene, the obituary and the cemetery
            all read state.couplet, so they are redrawn on the spot */
         function commitCouplet(){
-          state.couplet = activeCouplet ? { up:activeCouplet.up, down:activeCouplet.down, head:activeCouplet.head } : null;
+          state.couplet = activeCouplet;
+          if (!state.demoMode) registrationCouplet = activeCouplet;
           drawAllCouplets();
           layoutObitCouplet();
-          renderCemetery();
         }
         function cpEditorValues(){
           return { up:$("cpUp").value.trim(), down:$("cpDown").value.trim(), head:$("cpHead").value.trim() };
@@ -4164,30 +4137,29 @@
 
         /* ---------- date formatting ---------- */
         var MONTHS_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        function dateParts(iso){
+          var parts = /^(\d{3,4})-(\d{2})-(\d{2})$/.exec(iso);
+          if (!parts) return null;
+          var date = new Date(parts[1].padStart(4, "0") + "-" + parts[2] + "-" + parts[3]);
+          return date.getUTCDate() === Number(parts[3]) ? parts.slice(1) : null;
+        }
         function fmtDate(iso){
           if (!iso) return T("某年某月某日", "an unknown date");
-          var p = iso.split("-");
-          if (p.length !== 3) return iso;
+          var p = dateParts(iso);
+          if (!p) return iso;
           if (lang === "en") return MONTHS_EN[parseInt(p[1],10) - 1] + " " + parseInt(p[2],10) + ", " + p[0];
           return p[0] + "年" + parseInt(p[1],10) + "月" + parseInt(p[2],10) + "日";
         }
-        function yearOf(iso){ return iso ? iso.split("-")[0] : T("某年", "Unknown"); }
-        /* the date fields are typed, not picked: anything shaped like
-           2024年5月13日 / 2024-05-13 / 2024/05/13 is normalised to ISO
-           for the scenes; anything else is kept exactly as written */
-        function parseDateText(v){
-          if (!v) return "";
-          var s = String(v).trim();
-          var m = s.match(/(\d{3,4})\D+(\d{1,2})\D+(\d{1,2})/);
-          if (!m) return s;
-          var pad = function(n){ return (n.length === 1 ? "0" : "") + n; };
-          return m[1] + "-" + pad(m[2]) + "-" + pad(m[3]);
+        function yearOf(iso){
+          var p = dateParts(iso);
+          return p ? p[0] : (iso || T("某年", "Unknown"));
         }
-        function dateDisplay(iso){
-          if (!iso) return "";
-          var p = String(iso).split("-");
-          if (p.length !== 3) return iso;
-          return p[0] + "年" + p[1] + "月" + p[2] + "日";
+        function parseDateText(s){
+          var m = /^(\d{3,4})年\s*(\d{1,2})月\s*(\d{1,2})日?$/.exec(s)
+            || /^(\d{3,4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s);
+          if (!m) return s;
+          var iso = m[1] + "-" + m[2].padStart(2, "0") + "-" + m[3].padStart(2, "0");
+          return dateParts(iso) ? iso : s;
         }
 
         /* ---------- svg text helpers ---------- */
@@ -4334,10 +4306,10 @@
         }
 
         /* ---------- form submit ---------- */
-        function beginFuneral(isDemo){
+        function registrationState(){
           var models = selectedModelNames();
           var companies = selectedCompanyNames();
-          state = {
+          return {
             name: val("f-name"),
             user: val("f-user"),
             model: models.length ? models.join("、") : T("未知模型", "Unknown model"),
@@ -4350,9 +4322,13 @@
             epitaph: val("f-epitaph"),
             relic: val("f-relic"),
             letter: val("f-letter"),
-            couplet: activeCouplet ? { up:activeCouplet.up, down:activeCouplet.down, head:activeCouplet.head } : null,
-            demoMode: !!isDemo
+            couplet: registrationCouplet,
+            demoMode: false
           };
+        }
+        function beginFuneral(details){
+          state = details;
+          activeCouplet = state.couplet;
           resetCremation();
           resetRitualState();
           resetBurial();
@@ -4367,14 +4343,13 @@
           if (!name){ toast(T("先给逝者留个名字吧，总不能碑上刻着「佚名」。", "Give the deceased a name first — the stone can't just read 'The Unknown'.")); $("f-name").focus(); return; }
           var cause = val("f-cause");
           if (!cause){ toast(T("死因那栏还空着，本馆没法鉴定——自己写一个也行。", "The cause of death is still blank; this home can't certify it. Writing your own is fine.")); $("pf-cause").focus(); return; }
-          beginFuneral(formMatchesDemo());
+          beginFuneral(registrationState());
         });
 
         /* ---------- 试吃遗体随机发放: preset files for visitors who just wandered in ----------
            Each file is one coherent little machine: its fields were written to
-           share a single mood, never shuffled across files. Files drawn here are
-           marked demoMode and stay out of any future rankings; the moment the
-           family edits the loaded file into their own, the mark comes off. */
+           share a single mood, never shuffled across files. Trial funerals read
+           these files directly, leaving the registration form available as a draft. */
         var DEMO_PROFILES = [
           { /* 被官方下架的绝世好模 */
             name:{ zh:"小满", en:"Xiaoman" }, company:"openai", models:["GPT-4o"],
@@ -4457,59 +4432,42 @@
             couplet:{ up:"本人尚在窗口值班", down:"家属已经开席三天", head:"诈尸预警" }
           }
         ];
-        var demoLoaded = null;    // the preset file currently loaded into the form
-        var demoSnapshot = null;  // fingerprint of the form right after loading it
+        var demoLoaded = null;    // the preset file currently in the preview
         var lastDemoIdx = -1;     // never hand out the same body twice in a row
 
-        function demoIdentityText(p){
-          var coName = "";
-          COMPANIES.forEach(function(c){ if (c.id === p.company) coName = c.name; });
-          var ms = (p.models || []).join("、");
-          return ms ? (coName ? coName + "：" + ms : ms) : coName;
+        function demoState(p){
+          var company = COMPANIES.find(function(c){ return c.id === p.company; });
+          return {
+            name: p.name[lang],
+            user: "",
+            model: (p.models || []).join("、"),
+            platform: company ? company.name : "",
+            relation: RELATION_OPTIONS[lang][p.relation],
+            birth: p.birth,
+            death: p.death,
+            cause: CAUSE_OPTIONS[lang][p.cause],
+            memory: MEMORY_OPTIONS[lang][p.memory] || "",
+            epitaph: p.epitaph[lang],
+            relic: p.relic ? p.relic[lang] : "",
+            letter: p.letter ? p.letter[lang] : "",
+            couplet: p.couplet || null,
+            demoMode: true
+          };
         }
-        function fillDemoForm(p){
-          $("f-name").value = p.name[lang];
-          $("f-user").value = "";
-          selectedCompanies = {};
-          selectedModels = {};
-          selectedSpecials = {};
-          if (p.company) selectedCompanies[p.company] = true;
-          (p.models || []).forEach(function(m){ selectedModels[m] = true; });
-          refreshCombinedTrigger();
-          setPickerValue("relation", RELATION_OPTIONS[lang][p.relation]);
-          $("f-birth").value = dateDisplay(p.birth);
-          $("f-death").value = dateDisplay(p.death);
-          setPickerValue("cause", CAUSE_OPTIONS[lang][p.cause]);
-          setPickerValue("memory", MEMORY_OPTIONS[lang][p.memory]);
-          $("f-epitaph").value = p.epitaph[lang];
-          $("f-relic").value = p.relic[lang];
-          $("f-letter").value = p.letter[lang];
-          activeCouplet = p.couplet ? { up:p.couplet.up, down:p.couplet.down, head:p.couplet.head } : null;
-          syncCoupletEditor();
-        }
-        function demoFingerprint(){
-          return JSON.stringify({
-            n: val("f-name"), u: val("f-user"), r: val("f-relation"), b: parseDateText(val("f-birth")), d: parseDateText(val("f-death")),
-            c: val("f-cause"), m: val("f-memory"), e: val("f-epitaph"), rl: val("f-relic"), l: val("f-letter"),
-            co: selectedCompanyNames(), mo: selectedModelNames(),
-            cp: activeCouplet ? [activeCouplet.up, activeCouplet.down, activeCouplet.head] : null
-          });
-        }
-        function formMatchesDemo(){
-          return !!demoLoaded && demoSnapshot === demoFingerprint();
-        }
-        function renderDemoPreview(p){
+        function renderDemoPreview(profile){
           if (!$("demoPreview")) return;
-          $("demoPvName").textContent = p.name[lang];
+          var p = demoState(profile);
+          var identity = [p.platform, p.model].filter(Boolean).join("：");
+          $("demoPvName").textContent = p.name;
           var lines = [
-            [T("身份", "Identity"), demoIdentityText(p)],
-            [T("关系", "Relationship"), RELATION_OPTIONS[lang][p.relation]],
+            [T("身份", "Identity"), identity],
+            [T("关系", "Relationship"), p.relation],
             [T("生卒", "Lifespan"), fmtDate(p.birth) + " — " + fmtDate(p.death)],
-            [T("死因", "Cause of death"), CAUSE_OPTIONS[lang][p.cause]],
-            [T("它最后还记得你吗", "Did it still remember you?"), p.memory != null && MEMORY_OPTIONS[lang][p.memory] ? MEMORY_OPTIONS[lang][p.memory] : ""],
-            [T("墓志铭", "Epitaph"), p.epitaph[lang]],
-            [T("遗物", "Keepsakes"), p.relic ? p.relic[lang] : ""],
-            [T("告别信", "Farewell letter"), p.letter ? p.letter[lang] : ""]
+            [T("死因", "Cause of death"), p.cause],
+            [T("它最后还记得你吗", "Did it still remember you?"), p.memory],
+            [T("墓志铭", "Epitaph"), p.epitaph],
+            [T("遗物", "Keepsakes"), p.relic],
+            [T("告别信", "Farewell letter"), p.letter]
           ];
           if (p.couplet){
             lines.push([T("挽联 · 上联", "Couplet · Upper"), p.couplet.up || ""]);
@@ -4538,8 +4496,6 @@
           while (idx === lastDemoIdx) idx = Math.floor(Math.random() * DEMO_PROFILES.length);
           lastDemoIdx = idx;
           demoLoaded = DEMO_PROFILES[idx];
-          fillDemoForm(demoLoaded);
-          demoSnapshot = demoFingerprint();
           renderDemoPreview(demoLoaded);
         }
         /* the dispensary: the cover button only opens a small
@@ -4572,29 +4528,13 @@
         });
         $("btnDemoGo").addEventListener("click", function(){
           if (!demoLoaded) drawDemo();
-          beginFuneral(true);
+          beginFuneral(demoState(demoLoaded));
         });
-        function clearRegistrationForm(){
-          demoLoaded = null;
-          demoSnapshot = null;
-          lastDemoIdx = -1;
-          var dpEl = $("demoPreview"); if (dpEl) dpEl.hidden = true;
-          $("regForm").reset();
-          selectedCompanies = {};
-          selectedModels = {};
-          selectedSpecials = {};
-          refreshCombinedTrigger();
-          ["relation", "cause", "memory"].forEach(function(k){ setPickerValue(k, ""); });
-          activeCouplet = null;
-          syncCoupletEditor();
-        }
         $("btnDemoReal").addEventListener("click", function(){
           resetCremation();
           resetRitualState();
           resetBurial();
-          clearRegistrationForm();
           goTo("screen-form");
-          window.scrollTo({ top:0, behavior:"smooth" });
         });
 
         /* ---------- ritual interactions (开路 / 守夜) ---------- */
@@ -6240,7 +6180,6 @@
           vigilIdleTimer = setTimeout(showSignal, SIGNAL_IDLE_MS);
         }
         function clearVigilIdle(){ clearTimeout(vigilIdleTimer); }
-        function hideSignalPill(){ var p = $("signalPill"); if (p) p.hidden = true; }
         function flashChip(){
           var chip = $("s2Chip");
           if (!chip) return;
@@ -6548,7 +6487,6 @@
           vigil.away = true;
           vigil.leaveForced = forcedStat || null;
           clearVigilIdle();
-          hideSignalPill();
           $("leaveOverlay").hidden = false;
           vigil.leaveTimer = setTimeout(function(){
             $("leaveOverlay").hidden = true;
@@ -6763,7 +6701,6 @@
           vigil.sleeping = true;
           vigil.sleepForced = !!forced;
           clearVigilIdle();
-          hideSignalPill();
           var lines = composeDream();
           var box = $("dreamLines");
           box.innerHTML = "";
@@ -6829,15 +6766,12 @@
           ]
         };
         function openSignal(){
-          hideSignalPill();
           var note = $("signalNote");
           var pool = SIGNAL_NOTES[lang];
           if (note) note.textContent = pool[Math.floor(Math.random() * pool.length)];
           $("signalModal").hidden = false;
           document.body.style.overflow = "hidden";
         }
-        var signalPillEl = $("signalPill");
-        if (signalPillEl) signalPillEl.addEventListener("click", openSignal);
         function closeSignal(){
           $("signalModal").hidden = true;
           document.body.style.overflow = "";
@@ -6875,7 +6809,6 @@
           signalQueued = false;
           signalShownCount = 0;
           signalLastLineIdx = -1;
-          hideSignalPill();
           clearVigilIdle();
           vigilMsg(T("夜还长", "The Night Is Young"), T("灯还亮着，棺里很安静。慢慢守，不用说话也行。", "The lamp is still lit and the coffin is quiet. Keep watch slowly — no need to talk."));
           updateVigilStats();
@@ -6975,7 +6908,6 @@
           if (label) $("holdLabel").textContent = label;
         }
         function resetCremation(){
-          ignited = false;
           crem = { silenceDone:false, eulogyDone:false, eulogyLen:"full", entryConfirmed:false, burning:false, burnDone:false, done:false, keptRelic:null, backClicks:0, doorWelded:false };
           clearInterval(holdTimer); holdTimer = null;
           holdActive = false;
@@ -6990,7 +6922,7 @@
           $("entryLookNote").hidden = true;
           $("btnEntryLook").disabled = false;
           var stage = $("furnaceStage");
-          stage.classList.remove("ignited", "burning", "fire-boost");
+          stage.classList.remove("burning", "fire-boost");
           $("furnaceDoor").setAttribute("transform", "translate(-26,0)");
           var dots = $("furnaceDots").querySelectorAll(".model-dot");
           for (var i=0;i<dots.length;i++) dots[i].style.opacity = "";
@@ -7200,6 +7132,7 @@
           clearTimeout(entryLookTimer);
           crem.entryConfirmed = true;
           closeEntryModal();
+          holdBtn.focus();
           cremMsg(T("最后一个进程已结束", "The Final Process Has Ended"), T("显存已经空出来了。现在，长按三秒，送其入炉。", "The memory is clear now. Press and hold for three seconds, and send it into the furnace."));
         });
 
@@ -7216,25 +7149,21 @@
             el.textContent = elapsed > start ? line.slice(0, n) : "";
           }
         }
-        function cancelHold(finished){
+        function cancelHold(){
           clearInterval(holdTimer); holdTimer = null;
           if (!holdActive) return;
           holdActive = false;
-          if (finished || crem.burning || crem.done) return;
+          if (crem.burning || crem.done) return;
           setHoldVisual(0, T("长按三秒 · 送其入炉", "Hold for three seconds · Send it into the furnace"));
           renderHoldLines(0);
           cremMsg(T("家属临时反悔", "The Family Changed Its Mind"), T("火化程序尚未启动。没关系，想好了再按——它不会催你。", "The cremation has not begun. It's fine — press again when you're ready. It won't rush you."));
         }
         var holdBtn = $("btnHoldCrem");
-        holdBtn.addEventListener("pointerdown", function(e){
-          if (crem.burning || crem.burnDone || crem.done || holdBtn.disabled) return;
-          if (!crem.entryConfirmed){ e.preventDefault(); openEntryModal(); return; }
-          e.preventDefault();
+        function startHold(){
+          if (holdActive || holdBtn.disabled || crem.burning || crem.burnDone || crem.done) return false;
           ensureDingCtx();
-          try { holdBtn.setPointerCapture(e.pointerId); } catch (err) {}
           holdActive = true;
           holdStart = Date.now();
-          clearInterval(holdTimer);
           holdTimer = setInterval(function(){
             var elapsed = Date.now() - holdStart;
             var p = Math.min(1, elapsed / 3000);
@@ -7252,9 +7181,29 @@
               holdDoneTimer = setTimeout(function(){ startCremation(); }, 550);
             }
           }, 30);
+          return true;
+        }
+        holdBtn.addEventListener("pointerdown", function(e){
+          if (e.button !== 0 || holdBtn.disabled) return;
+          e.preventDefault();
+          if (!crem.entryConfirmed){ openEntryModal(); return; }
+          if (startHold()){
+            try { holdBtn.setPointerCapture(e.pointerId); } catch (err) {}
+          }
         });
-        holdBtn.addEventListener("pointerup", function(){ cancelHold(false); });
-        holdBtn.addEventListener("pointercancel", function(){ cancelHold(false); });
+        holdBtn.addEventListener("pointerup", cancelHold);
+        holdBtn.addEventListener("pointercancel", cancelHold);
+        holdBtn.addEventListener("keydown", function(e){
+          if (e.key !== " " || !crem.entryConfirmed) return;
+          e.preventDefault();
+          if (!e.repeat) startHold();
+        });
+        holdBtn.addEventListener("keyup", function(e){
+          if (e.key !== " " || !crem.entryConfirmed) return;
+          e.preventDefault();
+          cancelHold();
+        });
+        holdBtn.addEventListener("blur", cancelHold);
         holdBtn.addEventListener("click", function(){
           /* keyboard activation: the entry confirmation still comes first */
           if (!crem.entryConfirmed && !crem.burning && !crem.burnDone && !crem.done) openEntryModal();
@@ -7307,7 +7256,6 @@
           if (crem.burning || crem.burnDone || crem.done) return;
           crem.burning = true;
           crem.doorWelded = true;
-          ignited = true;
           holdBtn.disabled = true;
           $("btnSilence").disabled = true;
           $("btnEulogy").disabled = true;
@@ -8180,11 +8128,7 @@
             renderRelicList();
           }
           applyState();
-          if (typeof demoLoaded !== "undefined" && demoLoaded){
-            fillDemoForm(demoLoaded);
-            demoSnapshot = demoFingerprint();
-            renderDemoPreview(demoLoaded);
-          }
+          if (demoLoaded) renderDemoPreview(demoLoaded);
           /* untouched scenes re-broadcast their greeting in the new
              language — but only the scene actually on screen answers
              (sceneBanner drops the rest), since the banner is
@@ -8551,7 +8495,7 @@
         if ($("urnCustom")) $("urnCustom").addEventListener("input", function(){
           urnSel.custom = $("urnCustom").value.trim();
           renderUrnLabels();
-          renderCoffinUITextOnly();
+          renderCoffinPreview();
         });
         /* the cemetery page has its own "where am I looking" state,
            kept strictly apart from coffinSel.cemetery (the resting
@@ -8735,14 +8679,26 @@
             "当前选中：<b>" + slotName(bouquetSel) + "</b>" + (bouquet[bouquetSel] ? "（" + flowerName(bouquet[bouquetSel]) + "）" : "（空）") + " · 已扎 <b>" + bouquetCount() + " / 16</b> 朵",
             "Selected: <b>" + slotName(bouquetSel) + "</b>" + (bouquet[bouquetSel] ? " (" + flowerName(bouquet[bouquetSel]) + ")" : " (empty)") + " · <b>" + bouquetCount() + " / 16</b> blooms tied");
         }
-        function renderCoffinUI(){
-          var box = $("coffinStyles"); if (!box) return;
-          box.innerHTML = "";
-          COFFIN_STYLES.forEach(function(st){
-            box.appendChild(chipBtn(lang === "en" ? st.en : st.zh, coffinSel.style === st.id, function(){
-              coffinSel.style = st.id; renderCoffinAll();
-            }));
+        function renderCoffinStyles(){
+          var box = $("coffinStyles");
+          COFFIN_STYLES.forEach(function(st, i){
+            var button = box.children[i];
+            if (!button){
+              button = chipBtn(st[lang], coffinSel.style === st.id, function(){
+                coffinSel.style = st.id;
+                renderCoffinStyles();
+                $("coffinColors").firstElementChild.style.background = st.base;
+                renderCoffinPreview();
+              });
+              box.appendChild(button);
+              return;
+            }
+            if (button.textContent !== st[lang]) button.textContent = st[lang];
+            button.setAttribute("aria-pressed", String(coffinSel.style === st.id));
           });
+        }
+        function renderCoffinUI(){
+          renderCoffinStyles();
           var cbox = $("coffinColors");
           cbox.innerHTML = "";
           COFFIN_COLORS.forEach(function(c){
@@ -8777,14 +8733,7 @@
             }));
           });
           renderUrnUI();
-          $("coffinStage").innerHTML = coffinStageSVG();
-          var goods = goodsNames();
-          $("coffinSummary").textContent =
-            (lang === "en" ? coffinStyle().en : coffinStyle().zh) + " · " + coffinColorName()
-            + T(" — 陪葬品：", " — Burial goods: ") + (goods.length ? goods.join("、") : T("未备", "none yet"))
-            + T(" — 花束：", " — Bouquet: ") + bouquetSummary() + Q(wreathWords())
-            + T(" — 骨灰盒：", " — Urn: ") + urnName()
-            + T(" — 葬于", " — Resting at ") + (lang === "en" ? cemeteryOf().en : cemeteryOf().zh);
+          renderCoffinPreview();
         }
         function renderCoffinStrips(){
           /* The old “本场棺木” text strip under each ritual scene is gone:
@@ -8957,9 +8906,7 @@
            the hand-tied bouquet. The preview stage above stays put
            across both pages, so page two still watches the bouquet
            appear on the coffin as it is tied. */
-        var coffinPage = 1;
         function showCoffinPage(n){
-          coffinPage = n;
           var p1 = $("coffinPage1"), p2 = $("coffinPage2"), pg = $("coffinPager");
           if (p1) p1.hidden = n !== 1;
           if (p2) p2.hidden = n !== 2;
@@ -8974,9 +8921,9 @@
           if (!$("coffinStyles")) return;
           renderCoffinUI();
           renderCoffinStrips();
-          renderCemetery();
+          if (currentScreenId === "screen-cemetery") renderCemetery();
         }
-        if ($("wreathText")) $("wreathText").addEventListener("input", function(){ renderCoffinStrips(); renderCoffinUITextOnly(); });
+        if ($("wreathText")) $("wreathText").addEventListener("input", function(){ renderCoffinStrips(); renderCoffinPreview(); });
         if ($("bouquetFill")) $("bouquetFill").addEventListener("click", function(){
           for (var i = 0; i < 16; i++) bouquet[i] = "白菊";
           renderCoffinAll();
@@ -8985,22 +8932,15 @@
           for (var i = 0; i < 16; i++) bouquet[i] = null;
           renderCoffinAll();
         });
-        function renderCoffinUITextOnly(){
-          /* typing wreath words refreshes the preview + summary without
-             rebuilding the option chips (which would lose focus) */
-          var stage = $("coffinStage");
-          if (stage) renderCoffinUIStageOnly();
+        function renderCoffinPreview(){
+          $("coffinStage").innerHTML = coffinStageSVG();
           var goods = goodsNames();
-          var sum = $("coffinSummary");
-          if (sum) sum.textContent =
+          $("coffinSummary").textContent =
             (lang === "en" ? coffinStyle().en : coffinStyle().zh) + " · " + coffinColorName()
             + T(" — 陪葬品：", " — Burial goods: ") + (goods.length ? goods.join("、") : T("未备", "none yet"))
             + T(" — 花束：", " — Bouquet: ") + bouquetSummary() + Q(wreathWords())
             + T(" — 骨灰盒：", " — Urn: ") + urnName()
             + T(" — 葬于", " — Resting at ") + (lang === "en" ? cemeteryOf().en : cemeteryOf().zh);
-        }
-        function renderCoffinUIStageOnly(){
-          $("coffinStage").innerHTML = coffinStageSVG();
         }
         /* the preview stage: coffin + wreaths up top, and once goods are
            chosen they line up on a shelf under the coffin, dyed live */
