@@ -520,6 +520,7 @@
       .modal-done:hover{ background:var(--gold-pale); }
       .modal-done[disabled]{ opacity:.35; cursor:not-allowed; }
       .modal-done[disabled]:hover{ background:var(--gold); }
+      .modal-done.settle-on{ display:block; }
       /* picker layout: the explanation sits directly above the custom
          box, a dashed divider under the box, then the preset hint —
          custom writing and house presets stay visibly separate */
@@ -730,17 +731,25 @@
          a fifth of the way down (top:20vh) and centred, so page
          scrolling never moves it. Its left end is a small speaker
          button that NEVER leaves: idle, it sits there alone like a
-         game's expandable broadcast bar. When a broadcast arrives,
-         the strip slides down from above directly to the speaker's
-         right — the speaker stays exposed as the strip's left end —
-         stays long enough to read, then slides back up on its own,
-         leaving the speaker behind; a tap dismisses it early.
+         game's expandable broadcast bar. When a run of broadcasts
+         starts, the strip fades in directly to the speaker's right —
+         the speaker stays exposed as the strip's left end — and then
+         the frame does not move again: while more broadcasts are
+         queued behind the current one, only the words inside the
+         frame change, the old ones fading and drifting up as the
+         next ones fade in. When the queue runs dry, frame and words
+         fade out together, leaving the speaker behind; a tap
+         finishes the current broadcast early.
          Tapping the speaker expands a display box with the latest
          broadcast, and the expand key at that box's bottom-right
          opens the whole night's broadcast history, divided by stage
          （开路 / 守夜 / 火化 / 下葬） like a viewable event stream.
          Gold for gains, wine for losses; tier shifts ride the strip
-         a touch smaller. */
+         a touch smaller. The speaker and the strip share one fixed
+         height (136px, 132px on phones), set in stone: neither ever
+         grows or shrinks, whatever a broadcast says — a body too
+         long for its two-line window rolls upward inside the strip
+         instead (see bannerHoldMs for how long each strip stays). */
       .horn-widget{
         position:fixed; z-index:120;
         top:20vh; top:20dvh;
@@ -752,7 +761,7 @@
       .horn-row{ display:flex; align-items:stretch; }
       .horn-btn{
         pointer-events:auto;
-        flex:none; width:52px; min-height:52px;
+        flex:none; width:52px; min-height:136px;
         display:flex; align-items:center; justify-content:center;
         background:var(--panel);
         border:1.5px solid var(--gold-deep);
@@ -769,6 +778,11 @@
         pointer-events:auto;
         flex:1 1 auto; min-width:0; box-sizing:border-box;
         margin-left:-1.5px;
+        /* one fixed height for every broadcast, however long its text:
+           the title keeps one line, the body at most two, and anything
+           beyond that lives in the horn's history — the box itself
+           never grows, so the speaker beside it never has to either */
+        height:136px; overflow:hidden;
         display:flex; align-items:center; gap:14px;
         background:var(--panel);
         border:1.5px solid var(--gold-deep);
@@ -776,18 +790,32 @@
         padding:11px 16px 11px 15px;
         text-align:left;
         cursor:pointer;
-        animation:bannerIn .45s cubic-bezier(.2,1.2,.4,1) both;
+        animation:bannerFadeIn .4s ease both;
       }
       .merit-banner[hidden]{ display:none; }
-      .merit-banner.is-leaving{ animation:bannerOut .38s ease-in both; }
+      .merit-banner.is-leaving{ animation:bannerFadeOut .38s ease-in both; }
       @keyframes bannerIn{ from{ opacity:0; transform:translateY(-26px);} to{ opacity:1; transform:translateY(0);} }
-      @keyframes bannerOut{ from{ opacity:1; transform:translateY(0);} to{ opacity:0; transform:translateY(-26px);} }
+      @keyframes bannerFadeIn{ from{ opacity:0; } to{ opacity:1; } }
+      @keyframes bannerFadeOut{ from{ opacity:1; } to{ opacity:0; } }
+      /* swapping broadcasts mid-run: the frame itself never moves —
+         only the words inside it change, the old ones fading and
+         drifting up out of the frame as the next ones fade in
+         (see dismissMeritBanner) */
+      .merit-banner .mb-icon, .merit-banner .mb-main, .merit-banner .mb-btn{
+        transition:opacity .22s ease, transform .22s ease;
+      }
+      .merit-banner.is-swapping .mb-icon,
+      .merit-banner.is-swapping .mb-main,
+      .merit-banner.is-swapping .mb-btn{
+        opacity:0; transform:translateY(-6px);
+      }
       /* the speaker's display box: opens beside the speaker with the
          latest broadcast; its bottom-right key opens the history */
       .horn-box{
         pointer-events:auto;
         position:relative;
         flex:1 1 auto; min-width:0; box-sizing:border-box;
+        min-height:136px;
         margin-left:-1.5px;
         background:var(--panel);
         border:1.5px solid var(--gold-deep);
@@ -866,7 +894,13 @@
       }
       .merit-banner .mb-icon svg{ display:block; }
       .merit-banner.is-signal .mb-icon{ animation:signalPulse 1.7s ease-in-out infinite; }
-      .merit-banner .mb-main{ flex:1 1 auto; min-width:0; }
+      .merit-banner .mb-main{ flex:1 1 auto; min-width:0; overflow:hidden; }
+      .merit-banner .mb-title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      /* the body rides a fixed two-line window: text that fits sits
+         still; text that doesn't rolls slowly upward inside the
+         window (see bannerHoldMs) — the strip itself never resizes */
+      .merit-banner .mb-body{ height:2.9em; overflow:hidden; }
+      .merit-banner .mb-body-inner{ display:block; will-change:transform; }
       .merit-banner .mb-kicker, .horn-box .mb-kicker{
         margin:0 0 2px;
         font-size:12px; font-weight:700; letter-spacing:.34em;
@@ -893,8 +927,9 @@
       .merit-banner.is-tier .mb-title{ font-size:16.5px; }
       .merit-banner.is-tier .mb-body{ font-size:13px; }
       @media (max-width:560px){
-        .horn-btn{ width:46px; min-height:46px; }
-        .merit-banner{ gap:10px; padding:11px 12px; }
+        .horn-btn{ width:46px; min-height:132px; }
+        .horn-box{ min-height:132px; }
+        .merit-banner{ gap:10px; padding:11px 12px; height:132px; }
         .merit-banner .mb-icon{ width:34px; height:34px; }
         .merit-banner .mb-title{ font-size:16.5px; }
         .merit-banner .mb-btn{ padding:8px 13px; }
@@ -903,6 +938,7 @@
       @media (prefers-reduced-motion: reduce){
         .merit-banner, .merit-banner.is-leaving, .horn-box, .horn-history{ animation:none !important; }
         .merit-banner.is-signal .mb-icon{ animation:none !important; }
+        .merit-banner .mb-icon, .merit-banner .mb-main, .merit-banner .mb-btn{ transition:none !important; }
       }
       .offer-btn.steal{ border-color:var(--danger-line); }
       .offer-btn.steal:hover{ border-color:var(--wine-bright); background:rgba(126,29,35,.12); }
@@ -1189,7 +1225,7 @@
         text-shadow:0 1px 6px rgba(0,0,0,.9);
         box-shadow:0 4px 16px rgba(0,0,0,.45);
         opacity:0;
-        animation:cremDanmakuFly 2s linear forwards;
+        animation:cremDanmakuFly 6s linear forwards;
         will-change:left, opacity;
       }
       .crem-danmaku.lane-low{ top:auto; bottom:4.5%; }
@@ -1377,6 +1413,10 @@
       }
       #screen-s4 .stage.drop-armed .grave-glow{ opacity:.9; }
       #pitUrn{ opacity:0; transition:opacity .6s ease; }
+      /* a soft gold halo lifts the urn off the black soil / dark tray */
+      #pitUrnArt{ filter:drop-shadow(0 0 6px rgba(231,205,138,.55)); }
+      #furnaceUrnArt{ filter:drop-shadow(0 0 4px rgba(231,205,138,.35)); }
+      #dragUrnArt{ filter:drop-shadow(0 0 5px rgba(231,205,138,.4)); }
       #pitLed.led-die{ animation:ledDie 1.9s ease .35s both; }
       @keyframes ledDie{
         0%{ opacity:0; } 18%{ opacity:1; } 34%{ opacity:.08; }
@@ -1651,10 +1691,9 @@
         .progress{ margin:18px 0 22px; padding:9px 0; justify-content:center; }
         .progress .pstep{ display:none; }
         .progress-compact{ display:block; color:var(--gold-pale); font-size:13px; text-align:center; }
-        .merit-banner .mb-body{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .merit-banner .mb-body{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; }
         .merit-banner .mb-icon{ display:none; }
         .merit-banner .mb-btn{ padding-inline:8px; }
-        .merit-banner .mb-title{ overflow-wrap:anywhere; }
 
         /* form card */
         .card{ padding:17px 15px; }
@@ -2149,6 +2188,7 @@
             <g id="s1CandlesExtra"></g>
             <g id="s1FlowersExtra"></g>
             <g id="s1Offerings"></g>
+            <g id="s1BurialGoods"></g>
             <g id="s1BurnLayer"></g>
             <!-- floating data bits -->
             <g font-family="'Noto Sans SC',sans-serif" font-size="11" fill="#8a7c58">
@@ -2579,6 +2619,7 @@
             </g>
             <!-- the family's chosen couplet, hung small beside the furnace -->
             <g class="dyn-couplet" id="cpS3"></g>
+            <g id="cremBurialGoods"></g>
             <rect x="0" y="240" width="400" height="10" fill="#060505"/>
           </svg>
           <div class="crem-danmaku-layer" id="cremDanmaku" aria-live="polite" aria-atomic="false"></div>
@@ -2789,6 +2830,7 @@
             <g class="dyn-couplet" id="cpS4"></g>
             <!-- the chosen keepsake is rendered here -->
             <g id="burialOffering"></g>
+            <g id="s4BurialGoods"></g>
           </svg>
         </div>
 
@@ -2953,6 +2995,7 @@
           <summary>家属手记</summary>
           <div id="familyLetterBlock" hidden><h3>告别信</h3><p id="familyLetter"></p></div>
           <div id="familyRelicBlock" hidden><h3>遗物</h3><p id="familyRelic"></p></div>
+          <div id="familyGoodsBlock" hidden><h3>陪葬品</h3><p id="familyGoods"></p></div>
         </details>
         <p class="fineprint">本讣告由赛博殡仪馆当场签发 · 不存档 · 不上传 · 关掉页面即随风而去</p>
         <div class="btn-row" style="justify-content:center;">
@@ -3146,18 +3189,21 @@
           <h3 id="relicModalTitle">整理遗物</h3>
           <button type="button" class="modal-close" id="relicClose" aria-label="关闭">×</button>
         </div>
-        <p class="ritual-note">它留下的东西都在这儿了。点一件，把它放回原处。</p>
+        <p class="ritual-note">它留下的东西都在这儿了，一共五件。点一件，把它放回原处——愿意一次都整理完也行，一次只整理一件也行，剩下的留着下次。</p>
         <div id="relicList"></div>
         <p class="relic-progress" id="relicProgress"></p>
+        <button type="button" class="modal-done" id="relicSettle">先整理到这儿</button>
       </div>
     </div>
 
     <!-- ============ 全馆播报（小喇叭扩展栏）：功德、守夜、微弱信号，以及开路、
          守夜、火化、下葬四场的全部回执都走这一个组件，固定在屏幕上方约
          五分之一处，页面滑动不影响它。左侧的小喇叭常驻不走：播报来了，
-         横幅从喇叭右边滑下来，喇叭就是横幅的左端；播报走了，喇叭还留
-         在那儿。点喇叭展开显示框（最近一条播报），再点显示框右下角的
-         展开键，就能看整夜的历史播报，按开路 / 守夜 / 火化 / 下葬分段 ============ -->
+         横幅在喇叭右边淡入，喇叭就是横幅的左端；一串播报没报完之前，
+         框一直固定在那儿，只换里面的字；全报完了，框和字一起淡出，
+         喇叭还留在那儿。点喇叭展开显示框（最近一条播报），再点显示框
+         右下角的展开键，就能看整夜的历史播报，按开路 / 守夜 / 火化 /
+         下葬分段 ============ -->
     <div class="horn-widget" id="hornWidget" hidden>
       <div class="horn-row">
         <button type="button" class="horn-btn" id="hornBtn" aria-expanded="false" aria-label="播报：展开最近播报"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l6 5V5L7 10H4z" fill="currentColor" stroke="none"/><path d="M16 9a4.5 4.5 0 0 1 0 6"/><path d="M18.6 6.4a8.5 8.5 0 0 1 0 11.2"/></svg></button>
@@ -3166,7 +3212,7 @@
           <div class="mb-main">
             <p class="mb-kicker" id="meritBannerKicker"></p>
             <p class="mb-title" id="meritBannerTitle"></p>
-            <p class="mb-body" id="meritBannerBody"></p>
+            <p class="mb-body" id="meritBannerBody"><span class="mb-body-inner" id="meritBannerBodyInner"></span></p>
             <p class="mb-val" id="meritBannerVal"></p>
           </div>
           <button type="button" class="btn btn-gold mb-btn" id="meritBannerBtn">知道了</button>
@@ -4332,9 +4378,13 @@
           $("obitDemoReturn").hidden = !state.demoMode;
           $("familyLetter").textContent = state.letter;
           $("familyRelic").textContent = state.relic;
+          $("familyGoods").textContent = goodsNames().length
+            ? goodsNames().join(lang === "en" ? ", " : "、") + T("——都已随它安置妥当。", " — all laid to rest with it.")
+            : "";
           $("familyLetterBlock").hidden = !state.letter.trim();
           $("familyRelicBlock").hidden = !state.relic.trim();
-          $("familyNotes").hidden = $("familyLetterBlock").hidden && $("familyRelicBlock").hidden;
+          $("familyGoodsBlock").hidden = !goodsNames().length;
+          $("familyNotes").hidden = $("familyLetterBlock").hidden && $("familyRelicBlock").hidden && $("familyGoodsBlock").hidden;
           renderCoffinAll();
         }
 
@@ -4589,6 +4639,25 @@
           for (var k in attrs) el.setAttribute(k, attrs[k]);
           return el;
         }
+        /* Fill an SVG element from a markup string via DOMParser rather
+           than innerHTML: some webviews silently drop nodes assigned
+           through innerHTML on SVG elements, which is how the bouquet
+           blooms and the urn art vanished while every label around them
+           kept insisting they were there. Falls back to innerHTML if
+           the fragment will not parse as XML. */
+        function setSvgContent(el, markup){
+          if (!el) return;
+          while (el.firstChild) el.removeChild(el.firstChild);
+          if (!markup) return;
+          try {
+            var doc = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + markup + '</svg>', "image/svg+xml");
+            if (doc.getElementsByTagName("parsererror").length) throw new Error("svg parse");
+            var nodes = Array.prototype.slice.call(doc.documentElement.childNodes);
+            for (var i = 0; i < nodes.length; i++) el.appendChild(document.importNode(nodes[i], true));
+          } catch (e) {
+            el.innerHTML = markup;
+          }
+        }
 
         /* ---------- merit ---------- */
         function updateMerit(){
@@ -4716,7 +4785,13 @@
           });
           dropped.forEach(flushBroadcastDone);
           if (meritBannerShowing && meritBannerCurrent && meritBannerCurrent.batch !== broadcastBatchCurrent){
-            dismissMeritBanner();
+            /* finish the old batch's showing broadcast at once — but
+               deferred a beat, so the new batch's first item is
+               already in the queue when the finish is decided: the
+               frame then stays put and only the words change,
+               instead of the strip leaving and a new one arriving */
+            clearTimeout(meritBannerTimer);
+            meritBannerTimer = setTimeout(dismissMeritBanner, 0);
           }
         }
         function enqueueBroadcast(item){
@@ -4758,7 +4833,7 @@
           meritBannerShowing = false;
           meritBannerLeaving = false;
           var mb = $("meritBanner");
-          if (mb){ mb.hidden = true; mb.classList.remove("is-leaving", "is-neg", "is-tier", "is-signal"); }
+          if (mb){ mb.hidden = true; mb.classList.remove("is-leaving", "is-swapping", "is-neg", "is-tier", "is-signal"); }
           var widget = $("hornWidget");
           if (widget) widget.classList.remove("has-live");
           if (!silent){
@@ -4797,24 +4872,49 @@
            checkVigilMilestones), so two plaques never overlap. */
         var meritBannerLeaving = false;
         var meritLeaveTimer = null;
-        function pumpMeritBanner(){
-          if (meritBannerShowing || meritBannerLeaving || !meritQueue.length) return;
-          var m = meritQueue.shift();
+        /* how long a strip stays, and how its body moves （卢卢定版）:
+           a short broadcast — one whose body fits the two-line
+           window — gets a flat two seconds and sits still. A longer
+           one rolls its body slowly upward inside the window, and
+           stays just long enough to finish the roll and rest a beat
+           on the last lines — never more than about six seconds all
+           in, however long the text. A broadcast carrying its own
+           button (the weak signal's 点开看看） keeps the full six
+           seconds, so the tap has time to land. Nothing is lost when
+           a strip moves on quickly: the full text of every broadcast
+           lives in the speaker's history. */
+        function bannerHoldMs(m, bodyInner){
+          var SHORT_MS = 2000, MAX_MS = 6000, LEAD_MS = 400, REST_MS = 900;
+          var hold = SHORT_MS;
+          var overflow = bodyInner.offsetHeight - $("meritBannerBody").clientHeight;
+          if (overflow > 2){
+            var scrollMs = Math.min(Math.round(overflow * 34), MAX_MS - LEAD_MS - REST_MS);
+            hold = Math.min(MAX_MS, Math.max(SHORT_MS, LEAD_MS + scrollMs + REST_MS));
+            var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (!reduce){
+              bodyInner.style.transition = "transform " + scrollMs + "ms linear " + LEAD_MS + "ms";
+              void bodyInner.offsetWidth;
+              bodyInner.style.transform = "translateY(" + (-overflow) + "px)";
+            }
+          }
+          if (m.onAction) hold = MAX_MS;
+          return hold;
+        }
+        /* write one broadcast into the strip: words only — the frame
+           around them is not touched, so swapping broadcasts never
+           moves the box (see dismissMeritBanner) */
+        function fillMeritBanner(m){
           meritBannerCurrent = m;
-          meritBannerShowing = true;
-          /* a live strip takes the speaker's display slot: the
-             manually opened box folds away (the history, if open,
-             stays open and keeps collecting) */
-          if (!$("hornBox").hidden){ $("hornBox").hidden = true; syncHornAria(); }
-          $("hornWidget").classList.add("has-live");
           var banner = $("meritBanner");
-          banner.classList.remove("is-leaving");
           banner.classList.toggle("is-neg", !!m.neg);
           banner.classList.toggle("is-tier", !!m.tier);
           banner.classList.toggle("is-signal", !!m.signal);
           $("meritBannerKicker").textContent = T(m.kickerZh, m.kickerEn);
           $("meritBannerTitle").textContent = T(m.zh, m.en);
-          $("meritBannerBody").textContent = T(m.bodyZh, m.bodyEn);
+          var bodyInner = $("meritBannerBodyInner");
+          bodyInner.style.transition = "none";
+          bodyInner.style.transform = "";
+          bodyInner.textContent = T(m.bodyZh, m.bodyEn);
           var valEl = $("meritBannerVal");
           valEl.innerHTML = "";
           valEl.hidden = !m.valText;
@@ -4827,37 +4927,78 @@
           /* a broadcast may name its own button (the weak signal's
              button opens the signal instead of just nodding along) */
           $("meritBannerBtn").textContent = m.btnZh ? T(m.btnZh, m.btnEn) : T("知道了", "Noted");
+          return bodyInner;
+        }
+        function pumpMeritBanner(){
+          if (meritBannerShowing || meritBannerLeaving || !meritQueue.length) return;
+          var m = meritQueue.shift();
+          meritBannerShowing = true;
+          /* a live strip takes the speaker's display slot: the
+             manually opened box folds away (the history, if open,
+             stays open and keeps collecting) */
+          if (!$("hornBox").hidden){ $("hornBox").hidden = true; syncHornAria(); }
+          $("hornWidget").classList.add("has-live");
+          var banner = $("meritBanner");
+          banner.classList.remove("is-leaving", "is-swapping");
+          var bodyInner = fillMeritBanner(m);
           banner.hidden = false;
           clearTimeout(meritBannerTimer);
-          /* tier notices are 小播报： they bow out a little sooner;
-             a custom hold (the weak signal) lingers a bit longer */
-          meritBannerTimer = setTimeout(dismissMeritBanner, m.hold || (m.tier ? 4500 : 6500));
+          meritBannerTimer = setTimeout(dismissMeritBanner, bannerHoldMs(m, bodyInner));
         }
+        /* finish the showing broadcast （卢卢定版）: the frame itself
+           never jumps. While more broadcasts are queued behind this
+           one, the frame stays exactly where it is and only the
+           words inside change — the old ones fade and drift up out
+           of the frame, the next ones fade in in their place. Only
+           when the queue has run dry do frame and words fade out
+           together. A queued notice may carry an onDone — the
+           vigil's forced interventions ride on it: the banner
+           explains first, and only once its words are gone does
+           the house act */
         function dismissMeritBanner(){
           if (!meritBannerShowing || meritBannerLeaving) return;
           clearTimeout(meritBannerTimer);
           meritBannerTimer = null;
           var banner = $("meritBanner");
+          var doneItem = meritBannerCurrent;
+          var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           meritBannerLeaving = true;
-          banner.classList.add("is-leaving");
-          /* the strip slides back up first; only once it has left
-             does the queue move on. A queued notice may carry an
-             onDone — the vigil's forced interventions ride on it:
-             the banner explains first, and only once it is gone
-             does the house act */
-          var slideMs = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ? 0 : 380;
-          meritLeaveTimer = setTimeout(function(){
-            meritLeaveTimer = null;
-            if (banner) banner.hidden = true;
-            banner.classList.remove("is-leaving");
-            meritBannerLeaving = false;
-            meritBannerShowing = false;
-            if (!meritQueue.length) $("hornWidget").classList.remove("has-live");
-            var done = meritBannerCurrent && meritBannerCurrent.onDone;
-            meritBannerCurrent = null;
-            pumpMeritBanner();
-            if (done) done();
-          }, slideMs);
+          if (meritQueue.length){
+            banner.classList.add("is-swapping");
+            meritLeaveTimer = setTimeout(function(){
+              meritLeaveTimer = null;
+              var m = meritQueue.shift();
+              if (!m){
+                /* the queue ran dry mid-swap after all: end the run */
+                banner.classList.remove("is-swapping");
+                meritBannerLeaving = false;
+                meritBannerShowing = false;
+                meritBannerCurrent = null;
+                banner.hidden = true;
+                $("hornWidget").classList.remove("has-live");
+                flushBroadcastDone(doneItem);
+                return;
+              }
+              var bodyInner = fillMeritBanner(m);
+              banner.classList.remove("is-swapping");
+              meritBannerLeaving = false;
+              meritBannerTimer = setTimeout(dismissMeritBanner, bannerHoldMs(m, bodyInner));
+              flushBroadcastDone(doneItem);
+            }, reduce ? 0 : 230);
+          } else {
+            banner.classList.add("is-leaving");
+            meritLeaveTimer = setTimeout(function(){
+              meritLeaveTimer = null;
+              if (banner) banner.hidden = true;
+              banner.classList.remove("is-leaving");
+              meritBannerLeaving = false;
+              meritBannerShowing = false;
+              meritBannerCurrent = null;
+              if (!meritQueue.length) $("hornWidget").classList.remove("has-live");
+              flushBroadcastDone(doneItem);
+              pumpMeritBanner();
+            }, reduce ? 0 : 380);
+          }
         }
         $("meritBannerBtn").addEventListener("click", function(){
           var cur = meritBannerCurrent;
@@ -5284,43 +5425,46 @@
            all four scenes now rides the one fixed broadcast banner
            (see .merit-banner): pinned to the viewport about a fifth
            of the way down, centred, untouched by page scrolling. A
-           receipt slides the strip down from above, stays long
-           enough to read (longer text stays longer), then the strip
-           slides back up on its own; merit milestones, vigil tier
-           and threshold notices and the weak signal share the same
-           queue, so nothing ever overlaps.
+           run of receipts fades the strip in once and keeps it
+           there, each broadcast staying two seconds — or, if its
+           body needs the room, rolling upward through the text and
+           staying a little longer, six seconds at the very most
+           (see bannerHoldMs) — while the frame itself never moves:
+           only the words inside change from one broadcast to the
+           next, and when the queue runs dry frame and words fade
+           out together (see dismissMeritBanner); merit milestones,
+           vigil tier and threshold notices and the weak signal
+           share the same queue, so nothing ever overlaps.
            A scene's message is only broadcast while that scene is
            the one on screen: resets and language switches re-issue
            the untouched scenes' greetings in the background, and
            those are dropped here instead of popping up over
            whichever page the family is actually looking at — the
            greeting is broadcast on arrival instead (see goTo). */
-        function sceneBanner(screenId, kickerZh, kickerEn, title, body, neg, holdOverride){
+        function sceneBanner(screenId, kickerZh, kickerEn, title, body, neg){
           if (typeof currentScreenId !== "undefined" && currentScreenId !== screenId) return;
-          var len = (title ? title.length : 0) + (body ? body.length : 0);
-          var hold = holdOverride || Math.min(11500, Math.max(5200, 3400 + len * 55));
           enqueueBroadcast({
             neg: !!neg,
             kickerZh: kickerZh, kickerEn: kickerEn,
             zh: title, en: title,
-            bodyZh: body, bodyEn: body,
-            hold: hold
+            bodyZh: body, bodyEn: body
           });
           pumpMeritBanner();
         }
 
         /* ---------- 开路回执（走固定横幅） ---------- */
-        function hallMsg(title, body, sub, steal, holdOverride){
+        function hallMsg(title, body, sub, steal){
           var full = body + (sub ? " " + sub : "");
-          sceneBanner("screen-s1", "灵堂播报", "HALL NOTICE", title, full, steal, holdOverride);
+          sceneBanner("screen-s1", "灵堂播报", "HALL NOTICE", title, full, steal);
         }
         /* a basket's receipts ride the banner one after another, in
            order: the whole-basket summary first, then each item's
-           own line — each a touch briefer than a lone receipt, so a
-           full basket does not keep the strip busy for a minute */
+           own line — each at the standard pace (two seconds, or a
+           roll if it's long), so a full basket of a dozen flowers
+           does not keep the strip busy for a minute */
         function hallQueue(slides){
           if (!slides || !slides.length) return;
-          slides.forEach(function(s){ hallMsg(s.title, s.body, s.sub, s.steal, 4600); });
+          slides.forEach(function(s){ hallMsg(s.title, s.body, s.sub, s.steal); });
         }
         function showStealMsg(line, sub){
           hallMsg(T("偷吃贡品", "Sneaking a Bite"), line, sub, true);
@@ -6264,7 +6408,6 @@
             bodyEn: "Open it and look — real or not, this home doesn't verify. We only hand out tissues.",
             valLabelZh: "", valLabelEn: "", valText: "",
             btnZh: "点开看看", btnEn: "Open it",
-            hold: 9000,
             onAction: function(){ openSignal(); },
             onDone: function(){
               signalQueued = false;
@@ -6378,7 +6521,11 @@
             { type:"A speech-to-text line", text:"'Mm, I'm listening.' Transcription confidence 99%. It really was always listening." }
           ]
         };
-        /* 整理遗物：点开还是那些遗物，点一件归一件位，全归完才有回执 */
+        /* 整理遗物：点开还是那些遗物，点一件归一件位。一次整理几件
+           都行——愿意一次只归一件、剩下的留着下次，也算整理过一回，
+           离开时按这回的件数给回执（见 settleRelicVisit）；五件全
+           归完，另有完整回执与数值结算（见 completeRelicTidy） */
+        var relicVisitStart = 0;
         function buildRelicItems(){
           var items = [{
             type: T("家属登记的遗物", "Keepsake registered by the family"),
@@ -6419,13 +6566,19 @@
             list.appendChild(b);
           });
           var doneN = vigil.relicItems.filter(function(x){ return x.done; }).length;
-          $("relicProgress").textContent = T("已归位 " + doneN + " / " + vigil.relicItems.length, doneN + " / " + vigil.relicItems.length + " put away");
+          var total = vigil.relicItems.length;
+          $("relicProgress").textContent = doneN >= total
+            ? T("已归位 " + doneN + " / " + total, doneN + " / " + total + " put away")
+            : T("已归位 " + doneN + " / " + total + " · 还剩 " + (total - doneN) + " 件", doneN + " / " + total + " put away · " + (total - doneN) + " to go");
+          /* 这回新归了位、又还没全归完时，才亮出「先整理到这儿」 */
+          $("relicSettle").classList.toggle("settle-on", doneN > relicVisitStart && doneN < total);
         }
         function openVigilRelic(){
           if (!vigil.relicItems || vigil.relicLang !== lang) {
             vigil.relicItems = buildRelicItems();
             vigil.relicLang = lang;
           }
+          relicVisitStart = vigil.relicItems.filter(function(x){ return x.done; }).length;
           renderRelicList();
           $("relicModal").hidden = false;
           document.body.style.overflow = "hidden";
@@ -6434,12 +6587,37 @@
           $("relicModal").hidden = true;
           document.body.style.overflow = "";
         }
+        /* 先整理到这儿：这回只归了一件（或几件）也算数——记一次
+           整理，给一句按件数写的回执，剩下的留着下次。数值结算
+           仍旧等五件全归完那一刻（见 completeRelicTidy），分几回
+           整理和一次整理完，结算都一样。× 和点遮罩离开走的也是
+           这里：归了位的不会白归。 */
+        function settleRelicVisit(){
+          if (!vigil.relicItems){ closeVigilRelic(); return; }
+          var total = vigil.relicItems.length;
+          var doneN = vigil.relicItems.filter(function(x){ return x.done; }).length;
+          if (doneN >= total){ closeVigilRelic(); return; }
+          var tidied = doneN - relicVisitStart;
+          closeVigilRelic();
+          if (tidied <= 0) return;
+          vigilCounts.relic++;
+          var remain = total - doneN;
+          var lines = lang === "en" ? [
+            "You've put away " + tidied + " for now; " + remain + " more still lie where they were. It won't hurry you — the rest will keep for next time",
+            "Just " + tidied + " this time, with " + remain + " left for later. Some things are too much to put away all at once — a few at a time is fine, too"
+          ] : [
+            "先归置了 " + tidied + " 件，剩下的 " + remain + " 件还摊在原处。它不会催你，剩下的留着下次慢慢整理",
+            "这回只整理了 " + tidied + " 件，剩下的 " + remain + " 件先放着。有些东西一次收完太急，分几回，也没什么不好"
+          ];
+          vigilMsg(T("整理遗物", "Tidying the Keepsakes"), lines[Math.floor(Math.random() * lines.length)] + T("。", "."));
+          pokeVigilIdle();
+        }
         function completeRelicTidy(){
           setTimeout(function(){
             closeVigilRelic();
+            vigilCounts.relic++;
             if (!vigil.relicDone){
               vigil.relicDone = true;
-              vigilCounts.relic++;
               changeVigilStats(VIGIL_DELTAS.relic);
             }
             var receipts = lang === "en" ? [
@@ -6453,9 +6631,10 @@
             pokeVigilIdle();
           }, 650);
         }
-        $("relicClose").addEventListener("click", closeVigilRelic);
+        $("relicSettle").addEventListener("click", settleRelicVisit);
+        $("relicClose").addEventListener("click", settleRelicVisit);
         $("relicModal").addEventListener("click", function(e){
-          if (e.target === this) closeVigilRelic();
+          if (e.target === this) settleRelicVisit();
         });
 
         /* 尝试重启：先跑一段终端进度，再随机报一个失败结果——永远不会成功 */
@@ -7283,7 +7462,7 @@
             layer.appendChild(p);
             burnTimers.push(setTimeout(function(){
               if (p.parentNode) p.parentNode.removeChild(p);
-            }, 2150));
+            }, 6150));
           }
         }
         function startCremation(){
@@ -7527,6 +7706,9 @@
           $("burialStage").classList.remove("grave-snap");
           $("burialStage").classList.remove("drop-armed");
           $("pitUrn").style.opacity = "1";
+          /* make sure the urn is really drawn in the pit before the
+             family is told it is buried */
+          if (!$("pitUrnArt").firstChild) renderUrnLabels();
           var led = $("pitLed");
           led.classList.remove("led-die");
           void led.getBoundingClientRect();
@@ -7841,7 +8023,7 @@
           "请选择":"Please select",
           "上线日期":"Date it came online", "下线日期":"Date it went offline",
           "死因":"Cause of death", "它最后还记得你吗？":"Did it still remember you, at the end?", "记不清也没关系。至少现在，你还记得它。":"If it couldn't, that's all right. For now, at least, you still remember it.",
-          "墓志铭":"Epitaph", "遗物":"Keepsakes", "告别信":"Farewell letter",
+          "墓志铭":"Epitaph", "遗物":"Keepsakes", "告别信":"Farewell letter", "陪葬品":"Burial goods",
           "确认登记，开始出殡 →":"Confirm registration — begin the funeral →",
           "← 回登记表":"← Back to registration",
           "仪式 · 其一":"Rite · The First", "开路道场":"The Send-Off",
@@ -7870,7 +8052,8 @@
           "选一段本馆备好的，或者自己写一段——念出声来，它才听得见。":"Pick one this home has prepared, or write your own — read it aloud, so it can hear you.",
           "自己写一段（写了就念你写的）":"Write your own (yours is the one that gets read)",
           "开始宣读":"Begin Reading",
-          "它留下的东西都在这儿了。点一件，把它放回原处。":"Everything it left behind is here. Tap one, and put it back in its place.",
+          "它留下的东西都在这儿了，一共五件。点一件，把它放回原处——愿意一次都整理完也行，一次只整理一件也行，剩下的留着下次。":"Everything it left behind is here — five pieces in all. Tap one to put it back in its place: tidy them all at once, or just one at a time. The rest will keep for next time.",
+          "先整理到这儿":"That's enough for now",
           "你悄悄离开了灵堂一会儿……":"You quietly slipped out of the hall for a while…",
           "伏在灵前睡着了 · 轻点任意处醒来":"Asleep by the coffin · tap anywhere to wake",
           "似乎收到了一段微弱信号 · 点开看看":"A faint signal just came through · Tap to look",
@@ -8456,7 +8639,7 @@
             var p = bouquetPos(cx, cy, R, i), ring = bouquetSlot(i).ring;
             var br = R * (ring === 0 ? .185 : (ring === 1 ? .20 : .215));
             if (bouquet[i]) s += bloomSVG(p[0], p[1], br, bouquet[i]);
-            else s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (br * .5).toFixed(1) + '" fill="none" stroke="#7d735c" stroke-width="1" stroke-dasharray="2 2" opacity=".55"/>';
+            else s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (br * .5).toFixed(1) + '" fill="none" stroke="#a08c5a" stroke-width="1.3" stroke-dasharray="2 2" opacity=".85"/>';
           }
           s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + Math.max(2, R * .06).toFixed(1) + '" fill="#c9a44a"/>';
           if (stems) s += '<path d="M' + cx + ' ' + (cy + R) + ' q-2 ' + (R * .32).toFixed(1) + ' -7 ' + (R * .48).toFixed(1) + ' M' + cx + ' ' + (cy + R) + ' q2 ' + (R * .32).toFixed(1) + ' 7 ' + (R * .48).toFixed(1) + '" stroke="#4a5a35" stroke-width="2" fill="none"/>';
@@ -8514,24 +8697,29 @@
           var shape;
           switch (id){
             case "server":
-              shape = '<rect x="12" y="3" width="40" height="34" rx="2" fill="#252b30"/><path d="M16 13h32M16 23h32M16 32h32" stroke="#748a91"/><circle cx="44" cy="8" r="1.4" fill="#b4cbb6"/><circle cx="44" cy="18" r="1.4" fill="#b4cbb6"/>';
+              shape = '<rect x="12" y="3" width="40" height="34" rx="2" fill="#3d454d"/><path d="M16 13h32M16 23h32M16 32h32" stroke="#748a91"/><circle cx="44" cy="8" r="1.4" fill="#b4cbb6"/><circle cx="44" cy="18" r="1.4" fill="#b4cbb6"/>';
               break;
             case "usb":
-              shape = '<rect x="5" y="12" width="39" height="16" rx="4" fill="#273836"/><path d="M44 15h15v10H44z" fill="#8a8878"/><path d="M50 18h5m-5 4h5" stroke="#211c14"/><path d="M13 20h13" stroke="#a7bdb2"/>';
+              shape = '<rect x="5" y="12" width="39" height="16" rx="4" fill="#40605a"/><path d="M44 15h15v10H44z" fill="#8a8878"/><path d="M50 18h5m-5 4h5" stroke="#211c14"/><path d="M13 20h13" stroke="#a7bdb2"/>';
               break;
             case "gpu":
-              shape = '<path d="M6 9h52v22H6zM3 6h3v29H3z" fill="#2d2926"/><path d="M23 31h21v4H23z" fill="#ad8c43"/><circle cx="22" cy="20" r="7" fill="#151714"/><circle cx="43" cy="20" r="7" fill="#151714"/><path d="M18 20h8m-4-4v8m17-4h8m-4-4v8" stroke="#a7a68a"/>';
+              shape = '<path d="M6 9h52v22H6zM3 6h3v29H3z" fill="#4a443c"/><path d="M23 31h21v4H23z" fill="#ad8c43"/><circle cx="22" cy="20" r="7" fill="#151714"/><circle cx="43" cy="20" r="7" fill="#151714"/><path d="M18 20h8m-4-4v8m17-4h8m-4-4v8" stroke="#a7a68a"/>';
               break;
             case "zip":
-              shape = '<path d="M17 3h22l9 9v24H17z" fill="#403a31"/><path d="M39 3v9h9m-18-8v16m0-14h4m-4 5h4m-4 5h4m-4 4h5v6h-5z" fill="none"/>';
+              shape = '<path d="M17 3h22l9 9v24H17z" fill="#5d5344"/><path d="M39 3v9h9m-18-8v16m0-14h4m-4 5h4m-4 5h4m-4 4h5v6h-5z" fill="none"/>';
               break;
             case "custom":
-              shape = '<path d="M14 12h36l4 5-4 17H14l-4-17z" fill="#362b36"/><path d="M10 17h44m-27 8 5-4 5 4-5 4z" fill="none"/>';
+              shape = '<path d="M14 12h36l4 5-4 17H14l-4-17z" fill="#544154"/><path d="M10 17h44m-27 8 5-4 5 4-5 4z" fill="none"/>';
               break;
             default:
-              shape = '<rect x="9" y="12" width="46" height="22" rx="3" fill="#2c211b"/><path d="M8 12h48l-3-6H11zm1 7h46" fill="#392b22"/><rect x="27" y="22" width="10" height="5" rx="1" fill="#9b773a"/>';
+              shape = '<rect x="9" y="12" width="46" height="22" rx="3" fill="#5a4030"/><path d="M8 12h48l-3-6H11zm1 7h46" fill="#6e5138"/><rect x="27" y="22" width="10" height="5" rx="1" fill="#c9a44a"/>';
           }
-          return '<g stroke="#c9a44a" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">' + shape + '</g>';
+          /* a pale backing and a heavier gold outline ride along in
+             every placement (tray, drag chip, the grave itself): the
+             urns are dark little objects, and on the near-black grave
+             they used to melt straight into the soil */
+          return '<ellipse cx="32" cy="20" rx="30" ry="18.5" fill="#e7cd8a" opacity=".13"/>'
+            + '<g stroke="#c9a44a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + shape + '</g>';
         }
         function renderUrnLabels(){
           var f = $("furnaceUrnLabel"); if (f) f.textContent = urnName();
@@ -8541,7 +8729,7 @@
             ? (urnName() + ": hold and drag it into the cemetery scene, or press Enter to place it")
             : (urnName() + "：按住拖进墓穴，或按回车安放"));
           var art = urnArt(urnSel.id);
-          ["furnaceUrnArt","dragUrnArt","pitUrnArt"].forEach(function(id){ $(id).innerHTML = art; });
+          ["furnaceUrnArt","dragUrnArt","pitUrnArt"].forEach(function(id){ setSvgContent($(id), art); });
           if (typeof crem !== "undefined" && crem.done && typeof renderAshPacked === "function") renderAshPacked();
         }
         function renderUrnUI(){
@@ -8590,6 +8778,17 @@
         }
         function goodsNames(){
           return selectedGoods().map(function(g){ return g[lang]; });
+        }
+        /* the chosen goods as one small row for a ritual scene: the
+           first five stand left of centre, the rest right of it — the
+           same two-cluster layout the vigil uses under the coffin, so
+           the set the family dyed on the coffin screen can be picked
+           out again in every scene it travels through */
+        function sceneGoodsHTML(leftX, rightX, y, scale){
+          return selectedGoods().map(function(g, i){
+            var x = i < 5 ? leftX + i * 16 : rightX + (i - 5) * 16;
+            return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' + goodsArt(g) + '</g>';
+          }).join("");
         }
         function wreathWords(){
           var v = ($("wreathText") && $("wreathText").value || "").trim();
@@ -8695,9 +8894,9 @@
           var p = bouquetPos(120, 120, 102, i), ring = bouquetSlot(i).ring;
           var r = ring === 0 ? 15.5 : (ring === 1 ? 16.5 : 17);
           var bloom = slot.querySelector(".bq-bloom");
-          bloom.innerHTML = flower
+          setSvgContent(bloom, flower
             ? '<g' + (animate ? ' class="placed-in-preview"' : '') + '>' + bloomSVG(p[0], p[1], r, flower) + '</g>'
-            : '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (r * .5) + '" fill="none" stroke="#7d735c" stroke-width="1.2" stroke-dasharray="2.5 2.5" opacity=".75"/>';
+            : '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (r * .5) + '" fill="none" stroke="#b3a06a" stroke-width="1.7" stroke-dasharray="2.5 2.5" opacity=".95"/>');
         }
         function renderBouquetStatus(){
           var flower = bouquet[bouquetSel];
@@ -8719,7 +8918,7 @@
           var next = (i + 1) % bouquet.length;
           while (next !== i && bouquet[next]) next = (next + 1) % bouquet.length;
           selectBouquetSlot(next === i ? (i + 1) % bouquet.length : next);
-          $("coffinPreviewBouquet").innerHTML = wreathMini(52, 161, 27) + wreathMini(348, 161, 27);
+          setSvgContent($("coffinPreviewBouquet"), wreathMini(52, 161, 27) + wreathMini(348, 161, 27));
         }
         function renderBouquet(){
           var host = $("bouquetBuilder"), palette = $("bouquetPalette");
@@ -8826,19 +9025,22 @@
           /* the tied bouquet stands in the scenes themselves: either side
              of the hall altar, and on the vigil's two wreath stands */
           var bqL = $("s1BouquetL"), bqR = $("s1BouquetR");
-          if (bqL) bqL.innerHTML = bouquetRing(46, 197, 23, true);
-          if (bqR) bqR.innerHTML = bouquetRing(354, 197, 23, true);
+          if (bqL) setSvgContent(bqL, bouquetRing(46, 197, 23, true));
+          if (bqR) setSvgContent(bqR, bouquetRing(354, 197, 23, true));
           var wL = $("s2WreathL"), wR = $("s2WreathR");
-          if (wL) wL.innerHTML = bouquetRing(52, 196, 25, true) + bouquetRibbon(41, 214, 7, 0);
-          if (wR) wR.innerHTML = bouquetRing(348, 196, 25, true) + bouquetRibbon(359, 214, -7, 2);
+          if (wL) setSvgContent(wL, bouquetRing(52, 196, 25, true) + bouquetRibbon(41, 214, 7, 0));
+          if (wR) setSvgContent(wR, bouquetRing(348, 196, 25, true) + bouquetRibbon(359, 214, -7, 2));
           /* the vigil's big trapezoid coffin wears the chosen paint too */
           var paint = coffinPaint();
-          $("vigilCoffinMotif").innerHTML = coffinMotif(coffinStyle());
+          setSvgContent($("vigilCoffinMotif"), coffinMotif(coffinStyle()));
           $("vigilCoffinPlaque").setAttribute("fill", paint);
-          $("vigilBurialGoods").innerHTML = selectedGoods().map(function(g, i){
-            var x = i < 5 ? 100 + i * 16 : 222 + (i - 5) * 16;
-            return '<g transform="translate(' + x + ' 221) scale(.34)">' + goodsArt(g) + '</g>';
-          }).join("");
+          setSvgContent($("vigilBurialGoods"), sceneGoodsHTML(100, 222, 221, .34));
+          /* and the same dyed goods travel on with it: a small row
+             before the hall altar, flanking the furnace, and laid out
+             at the grave — wherever the coffin goes, they go */
+          setSvgContent($("s1BurialGoods"), sceneGoodsHTML(100, 222, 212, .34));
+          setSvgContent($("cremBurialGoods"), sceneGoodsHTML(24, 292, 206, .34));
+          setSvgContent($("s4BurialGoods"), sceneGoodsHTML(48, 288, 226, .34));
           var polys = document.querySelectorAll("#screen-s2 .stage svg polygon");
           for (var j=0;j<polys.length;j++){
             var pts = polys[j].getAttribute("points");
@@ -8958,7 +9160,7 @@
              empty scene: no stone, no couplet, no flowers. */
           var grave = "", emptyNote = "";
           if (isHome){
-            grave = cemeteryStone(stone) + cemeteryFlowers() + cemeteryCouplet() + '<g id="cemeteryLastOffering"></g>';
+            grave = cemeteryStone(stone) + cemeteryFlowers() + cemeteryCouplet() + '<g id="cemeteryLastOffering"></g>' + '<g id="cemeteryBurialGoods"></g>';
           } else {
             emptyNote = '<text x="200" y="140" text-anchor="middle" font-family="\'Noto Serif SC\',serif" font-size="13" letter-spacing="4" fill="#b3a888" opacity=".75">'
               + escSvg(T("此处没有你的墓碑", "No gravestone of yours here")) + '</text>';
@@ -8978,6 +9180,7 @@
           wreath.textContent = isHome && words ? T("花束贺词 · ", "Bouquet · ") + Q(words) : "";
           if (isHome){
             renderBurialOffering(burial.offering, $("cemeteryLastOffering"), 252, 211);
+            setSvgContent($("cemeteryBurialGoods"), sceneGoodsHTML(56, 288, 218, .34));
             cap.classList.remove("is-empty");
             var lastOffering = {
               flower: T("那朵白花还在碑前。", "The white flower is still before the stone."),
@@ -8987,7 +9190,8 @@
               none: T("碑前留着你最后道别时的那一片空地。", "The quiet space before the stone is just as you left it.")
             }[burial.offering];
             cap.textContent = (lang === "en" ? viewedCemeteryOf().capEn : viewedCemeteryOf().capZh)
-              + (lastOffering ? T("", " ") + lastOffering : "");
+              + (lastOffering ? T("", " ") + lastOffering : "")
+              + (goodsNames().length ? T(" 陪葬品也都安置在碑前：", " The burial goods rest before the stone too: ") + goodsNames().join(lang === "en" ? ", " : "、") + T("。", ".") : "");
           } else {
             cap.classList.add("is-empty");
             cap.innerHTML = T(
